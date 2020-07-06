@@ -1,12 +1,16 @@
 from tkinter import *
 import tkinter.ttk as ttk
+from tkinter import colorchooser
 import re
+import os
+from PIL import Image, ImageTk
 
 
 class CommandLine:
     def __init__(self, master):
         self.key_words = ['AVERAGE', 'SUM', 'DIFFERENCE', 'PRODUCT', 'DIVIDEND']
-        self.letter_map = {'A': 0, 'B': 40, 'C': 80, 'D': 120, 'E': 160, 'F': 200, 'G': 240, 'H': 280, 'I': 320, 'J': 360, 'K': 400}
+        self.letter_map = {'A': 0, 'B': 40, 'C': 80, 'D': 120, 'E': 160, 'F': 200, 'G': 240, 'H': 280, 'I': 320,
+                           'J': 360, 'K': 400}
         self.cell_pattern = re.compile(r'[A-K]\d{1,2}')
         self.paddingx = 5
         self.paddingy = 0
@@ -18,27 +22,12 @@ class CommandLine:
         self.cell_entry_label = Label(self.master, text="Cell")
         self.equation_entry_label = Label(self.master, text="Equation/Value")
 
-        self.cell_entry_label.grid(row=0, column=0, padx=self.paddingx, pady=self.paddingy)
+        self.cell_entry_label.grid(row=0, column=1, padx=self.paddingx, pady=self.paddingy)
         self.equation_entry_label.grid(row=0, column=3, padx=self.paddingx, pady=self.paddingy)
         self.insert_button.grid(row=1, column=0, padx=self.paddingx, pady=self.paddingy)
         self.cell_entry.grid(row=1, column=1, padx=self.paddingx, pady=self.paddingy)
         self.equal_sign.grid(row=1, column=2, padx=self.paddingx, pady=self.paddingy)
         self.equation_entry.grid(row=1, column=3, padx=self.paddingx, pady=self.paddingy)
-
-    def average(self):
-        pass
-
-    def sum(self):
-        pass
-
-    def difference(self):
-        pass
-
-    def product(self):
-        pass
-
-    def dividend(self):
-        pass
 
     def get_cell_index(self, value):
         index = None
@@ -60,11 +49,11 @@ class CommandLine:
             cell_index = self.get_cell_index(match)
             cell_value = cells[cell_index].get()
             in_value = in_value.replace(match, cell_value)
-            try:
-                eval(in_value, {})
-                return eval(in_value, {})
-            except NameError:
-                return "Error"
+        try:
+            eval(in_value, {})
+            return eval(in_value, {})
+        except NameError:
+            return "Error"
 
     def insert(self):
         insert_value = self.get_equation(self.equation_entry.get())
@@ -77,18 +66,113 @@ class CommandLine:
 root = Tk()
 root.geometry('1500x950')
 
-load_indicator = Toplevel()
-load_indicator.geometry("500x500")
-load_label = Label(load_indicator, text="Loading...", font="bold", justify=CENTER)
-load_label.pack()
-
-
-def kill_load_screen():
-    load_indicator.destroy()
-
-
 cells = []
 
+
+def bold_text(*args):
+    entry = cell_frame.focus_get()
+    if 'bold' in entry.cget('font'):
+        entry.configure(font=('Helvetica', 12))
+    else:
+        entry.configure(font=('Helvetica', 12, 'bold'))
+    return "break"
+
+
+def italics_text(*args):
+    entry = cell_frame.focus_get()
+    if 'italic' in entry.cget('font'):
+        entry.configure(font=('Helvetica', 12))
+    else:
+        entry.configure(font=('Helvetica', 12, 'italic'))
+    return "break"
+
+
+def underline_text(*args):
+    entry = cell_frame.focus_get()
+    if 'underline' in entry.cget('font'):
+        entry.configure(font=('Helvetica', 12))
+    else:
+        entry.configure(font=('Helvetica', 12, 'underline'))
+    return "break"
+
+
+def strike_through_text(*args):
+    entry = cell_frame.focus_get()
+    if 'overstrike' in entry.cget('font'):
+        entry.configure(font=('Helvetica', 12))
+    else:
+        entry.configure(font=('Helvetica', 12, 'overstrike'))
+    return "break"
+
+
+def change_bg(*args):
+    entry = cell_frame.focus_get()
+    color = colorchooser.askcolor()
+    entry.configure(background=color[1])
+
+
+def change_fg(*args):
+    entry = cell_frame.focus_get()
+    color = colorchooser.askcolor()
+    entry.configure(foreground=color[1])
+
+
+def copy(*args):
+    entry = cell_frame.focus_get()
+    entry.event_generate('<<Copy>>')
+
+
+def cut(*args):
+    entry = cell_frame.focus_get()
+    entry.event_generate('<<Cut>>')
+
+
+def paste(*args):
+    entry = cell_frame.focus_get()
+    entry.event_generate('<<Paste>>')
+
+
+def update_color_buttons(*args):
+    global bg_color_button
+    global fg_color_button
+    entry = cell_frame.focus_get()
+    bg = entry.cget("background")
+    fg = entry.cget("foreground")
+    bg_color_button.configure(background=bg)
+    fg_color_button.configure(background=fg)
+
+
+# Menu Bar
+
+menubar = Menu(root)
+
+fileMenu = Menu(menubar, tearoff=0)
+fileMenu.add_command(label='Open', accelerator="Ctrl+O")
+fileMenu.add_command(label='Save', accelerator="Ctrl+S")
+fileMenu.add_command(label='New', accelerator="Ctrl+N")
+menubar.add_cascade(menu=fileMenu, label='File')
+
+editMenu = Menu(menubar, tearoff=0)
+editMenu.add_command(label="Copy", accelerator="Ctrl+C")
+editMenu.add_command(label="Cut", accelerator="Ctrl+X")
+editMenu.add_command(label="Paste", accelerator="Ctrl+V")
+menubar.add_cascade(menu=editMenu, label='Edit')
+
+formatMenu = Menu(menubar, tearoff=0)
+formatMenu.add_command(label="Bold", accelerator="Ctrl+B", command=bold_text)
+formatMenu.add_command(label="Underline", accelerator="Ctrl+U", command=underline_text)
+formatMenu.add_command(label="Italics", accelerator="Ctrl+U", command=italics_text)
+formatMenu.add_command(label="Strikethrough", accelerator="Ctrl+T")
+formatMenu.add_command(label="Text Color")
+menubar.add_cascade(menu=formatMenu, label='Format')
+
+helpMenu = Menu(menubar, tearoff=0)
+helpMenu.add_command(label='Features')
+helpMenu.add_command(label='About')
+menubar.add_cascade(menu=helpMenu, label='Help')
+root.config(menu=menubar)
+
+# Frames
 
 tool_bar_frame = Frame(root)
 command_line_frame = Frame(root)
@@ -102,9 +186,48 @@ cell_frame_master.pack(fill=X, side=BOTTOM)
 
 # Tool Bar
 
-for i in range(5):
-    button = Button(tool_bar_frame, text=f"Button {i}")
-    button.pack(side=LEFT)
+paddingx = 1
+paddingy = 1
+
+save_image = Image.open(os.path.join("icons", "save_icon.png"))
+bold_image = Image.open(os.path.join("icons", "bold_icon.png"))
+italics_image = Image.open(os.path.join("icons", "italics_icon.png"))
+underline_image = Image.open(os.path.join("icons", "underline_icon.png"))
+strike_through_image = Image.open(os.path.join("icons", "strikethrough_icon.png"))
+open_image = Image.open(os.path.join("icons", "open_icon.png"))
+new_image = Image.open(os.path.join("icons", "new_icon.png"))
+
+save_icon = ImageTk.PhotoImage(image=save_image)
+bold_icon = ImageTk.PhotoImage(image=bold_image)
+italics_icon = ImageTk.PhotoImage(image=italics_image)
+underline_icon = ImageTk.PhotoImage(image=underline_image)
+strike_through_icon = ImageTk.PhotoImage(image=strike_through_image)
+open_icon = ImageTk.PhotoImage(image=open_image)
+new_icon = ImageTk.PhotoImage(image=new_image)
+
+new_button = Button(tool_bar_frame, image=new_icon)
+open_button = Button(tool_bar_frame, image=open_icon)
+save_button = Button(tool_bar_frame, image=save_icon)
+bold_button = Button(tool_bar_frame, image=bold_icon, command=bold_text)
+italics_button = Button(tool_bar_frame, image=italics_icon, command=bold_text)
+underline = Button(tool_bar_frame, image=underline_icon, command=bold_text)
+strikethrough_button = Button(tool_bar_frame, image=strike_through_icon, command=bold_text)
+bg_label = Label(tool_bar_frame, text="Background")
+fg_label = Label(tool_bar_frame, text="Text Color")
+bg_color_button = Button(tool_bar_frame, background='white', command=change_bg)
+fg_color_button = Button(tool_bar_frame, background='black', command=change_fg)
+
+new_button.pack(side=LEFT, padx=paddingx, pady=paddingy)
+open_button.pack(side=LEFT, padx=paddingx, pady=paddingy)
+save_button.pack(side=LEFT, padx=paddingx, pady=paddingy)
+bold_button.pack(side=LEFT, padx=paddingx, pady=paddingy)
+italics_button.pack(side=LEFT, padx=paddingx, pady=paddingy)
+underline.pack(side=LEFT, padx=paddingx, pady=paddingy)
+strikethrough_button.pack(side=LEFT, padx=paddingx, pady=paddingy)
+bg_label.pack(side=LEFT, padx=paddingx, pady=paddingy)
+bg_color_button.pack(side=LEFT, padx=paddingx, pady=paddingy)
+fg_label.pack(side=LEFT, padx=paddingx, pady=paddingy)
+fg_color_button.pack(side=LEFT, padx=paddingx, pady=paddingy)
 
 # Command Line
 
@@ -149,14 +272,22 @@ for label in labels_columns:
     column_label = Label(column_frame, text=label, justify='center', relief=RAISED)
     column_label.pack(fill=X)
     for i in range(40):
-        cell = ttk.Entry(column_frame)
+        cell = Entry(column_frame)
+        cell.configure(font=('Helvetica', 12), borderwidth=0)
         cells.append(cell)
         cell.pack()
 
+# root.bind('<Control_L>o', file.open)
+# root.bind('<Control_L>s', file.save)
+# root.bind('<Control_L>n', file.new)
+root.bind('<Control_L>b', bold_text)
+root.bind('<Control_L>u', underline_text)
+root.bind('<Control_L>i', italics_text)
+root.bind('<Control_L>t', strike_through_text)
+root.bind('<Button-1>', update_color_buttons)
 
 # Status
 status_bar = Label(status_frame, text="This is the status bar", relief='sunken')
 status_bar.pack(fill=X, side=BOTTOM)
 
-root.after(0, kill_load_screen)
 root.mainloop()
