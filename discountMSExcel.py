@@ -69,7 +69,7 @@ class File:
             self.master.title(self.fileName)
             for cell in cells:
                 cell[0].delete(0, END)
-                cell[0].configure(font=('Helvetica', 12), background='#FFFFFF', foreground='#000000')
+                cell[0].configure(font=('Helvetica', 11), background='#FFFFFF', foreground='#000000')
         elif answer is None:
             return
         else:
@@ -156,36 +156,36 @@ cells = []
 def bold_text(*args):
     entry = cell_frame.focus_get()
     if 'bold' in entry.cget('font'):
-        entry.configure(font=('Helvetica', 12))
+        entry.configure(font=('Helvetica', 11))
     else:
-        entry.configure(font=('Helvetica', 12, 'bold'))
+        entry.configure(font=('Helvetica', 11, 'bold'))
     return "break"
 
 
 def italics_text(*args):
     entry = cell_frame.focus_get()
     if 'italic' in entry.cget('font'):
-        entry.configure(font=('Helvetica', 12))
+        entry.configure(font=('Helvetica', 11))
     else:
-        entry.configure(font=('Helvetica', 12, 'italic'))
+        entry.configure(font=('Helvetica', 11, 'italic'))
     return "break"
 
 
 def underline_text(*args):
     entry = cell_frame.focus_get()
     if 'underline' in entry.cget('font'):
-        entry.configure(font=('Helvetica', 12))
+        entry.configure(font=('Helvetica', 11))
     else:
-        entry.configure(font=('Helvetica', 12, 'underline'))
+        entry.configure(font=('Helvetica', 11, 'underline'))
     return "break"
 
 
 def strike_through_text(*args):
     entry = cell_frame.focus_get()
     if 'overstrike' in entry.cget('font'):
-        entry.configure(font=('Helvetica', 12))
+        entry.configure(font=('Helvetica', 11))
     else:
-        entry.configure(font=('Helvetica', 12, 'overstrike'))
+        entry.configure(font=('Helvetica', 11, 'overstrike'))
     return "break"
 
 
@@ -401,7 +401,10 @@ for label in labels_columns:
     column_label.pack(fill=X)
     for i in range(40):
         cell = Entry(column_frame)
-        cell.configure(font=('Helvetica', 12), borderwidth=0)
+        if os.name == 'nt':
+            cell.configure(font=('Helvetica', 11))
+        else:
+            cell.configure(font=('Helvetica', 11), borderwidth=0)
         cells.append([cell, ""])
         cell.pack()
 
