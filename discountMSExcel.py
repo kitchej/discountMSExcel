@@ -1,9 +1,83 @@
 from tkinter import *
 import tkinter.ttk as ttk
 from tkinter import colorchooser
+from tkinter import filedialog
+from tkinter import messagebox
+from decimal import Decimal
 import re
 import os
+import pickle
 from PIL import Image, ImageTk
+
+
+class File:
+    def __init__(self, master):
+        self.master = master
+        self.file_path = ""
+        self.fileName = "Untitled.dme"
+        self.master.title(self.fileName)
+
+    def save(self, *args):
+        if self.fileName == "Untitled.dme":
+            self.fileName = filedialog.asksaveasfilename(filetypes=(('*.dme', '*.dme'), ('*.csv', '*.csv')))
+            if self.fileName == ():
+                return
+        save_data = []
+        for cell in cells:
+            save_data.append(
+                [cell[0].get(), cell[0].cget("font"), cell[0].cget("background"), cell[0].cget("foreground"), cell[1]]
+            )
+        try:
+            with open(self.fileName, 'wb') as save_file:
+                pickle.dump(save_data, save_file)
+            self.master.title(self.fileName.split("/")[-1])
+        except FileNotFoundError:
+            messagebox.showerror(title="Error", message="File not found")
+        except PermissionError:
+            messagebox.showerror(title="Error", message="Current user does not have permission to save this file")
+        except OSError:
+            messagebox.showerror(title="Error", message="Cannot save file")
+
+    def open(self, *args):
+        fileNameOld = self.fileName
+        self.fileName = filedialog.askopenfilename(filetypes=(('*.dme', '*.dme'), ('*.csv', '*.csv')))
+        if self.fileName == ():
+            return
+        try:
+            with open(self.fileName, 'rb') as open_file:
+                save_data = pickle.load(open_file)
+            for cell, data in zip(cells, save_data):
+                cell[0].insert(0, data[0])
+                cell[0].configure(font=data[1], background=data[2], foreground=data[3])
+                cell[1] = data[4]
+            self.master.title(self.fileName.split("/")[-1])
+        except FileNotFoundError:
+            messagebox.showerror(title="Error", message="File not found")
+            self.fileName = fileNameOld
+        except PermissionError:
+            messagebox.showerror(title="Error", message="Current user does not have permission to open this file")
+            self.fileName = fileNameOld
+        except OSError:
+            messagebox.showerror(title="Error", message="Cannot open file")
+            self.fileName = fileNameOld
+
+    def new(self, *args):
+        answer = messagebox.askyesnocancel(title='Save?', message=f"Save {self.fileName} before creating new file?")
+        if answer is True:
+            self.save()
+            self.fileName = "Untitled.dme"
+            self.master.title(self.fileName)
+            for cell in cells:
+                cell[0].delete(0, END)
+                cell[0].configure(font=('Helvetica', 12), background='#FFFFFF', foreground='#000000')
+        elif answer is None:
+            return
+        else:
+            self.fileName = "Untitled.dmw"
+            self.master.title(self.fileName)
+            for cell in cells:
+                cell[0].delete(0, END)
+                cell[0].configure(font=('Helvetica', 12), background='#FFFFFF', foreground='#000000')
 
 
 class CommandLine:
@@ -42,12 +116,14 @@ class CommandLine:
                 index = int(self.letter_map.get(letter)) + (int(number) - 1)
         return index
 
-    def get_equation(self, in_value):
+    def parse_equation(self, in_value):
         global cells
         matches = re.findall(self.cell_pattern, in_value)
         for match in matches:
             cell_index = self.get_cell_index(match)
-            cell_value = cells[cell_index].get()
+            cell_value = cells[cell_index][0].get()
+            if cell_value is None:
+                in_value = in_value.replace(match, 0)
             in_value = in_value.replace(match, cell_value)
         try:
             eval(in_value, {})
@@ -55,15 +131,23 @@ class CommandLine:
         except NameError:
             return "Error"
 
-    def insert(self):
-        insert_value = self.get_equation(self.equation_entry.get())
-        cell_index = self.get_cell_index(self.cell_entry.get())
-        if cells[cell_index].get():
-            cells[cell_index].delete(0, END)
-        cells[cell_index].insert(0, insert_value)
+    def insert(self, saved_equation=None, cell_obj=None):
+        if saved_equation:
+            insert_value = self.parse_equation(saved_equation)
+            if cell_obj.get():
+                cell_obj.delete(0, END)
+            cell_obj.insert(0, insert_value)
+        else:
+            insert_value = self.parse_equation(self.equation_entry.get())
+            cell_index = self.get_cell_index(self.cell_entry.get())
+            if cells[cell_index][0].get():
+                cells[cell_index][0].delete(0, END)
+            cells[cell_index][0].insert(0, insert_value)
+            cells[cell_index][1] = self.equation_entry.get()
 
 
 root = Tk()
+
 root.geometry('1500x950')
 
 cells = []
@@ -132,37 +216,80 @@ def paste(*args):
     entry.event_generate('<<Paste>>')
 
 
-def update_color_buttons(*args):
+def update_cells(*args):
     global bg_color_button
     global fg_color_button
+
+    # update color buttons to match the cell in focus
     entry = cell_frame.focus_get()
     bg = entry.cget("background")
     fg = entry.cget("foreground")
     bg_color_button.configure(background=bg)
     fg_color_button.configure(background=fg)
 
+    # Update all cells with an equation
+    for cell in cells:
+        if cell[1] != '':
+            if cell[0].get() == '':
+                cell[1] = ''
+            else:
+                comm.insert(cell[1], cell[0])
+        else:
+            pass
+
+    # Get current cell in focus
+    index = 0
+    for cell in cells:
+        if cell[0] == entry:
+            break
+        index += 1
+
+    # find out the coordinates to the selected entry box
+    coords = index / 40
+    coords = Decimal(str(coords))
+    row = Decimal(str(coords)) % 1
+    column = coords - row
+    row = (row*40) + 1
+    row = int(row)
+    column = int(column)
+    letters = list(comm.letter_map.keys())
+    letter = letters[column]
+    position = f"{letter}{row}"
+    if cells[index][1] != '':  # if cell value determined by equation, show it
+        comm.equation_entry.delete(0, END)
+        comm.equation_entry.insert(0, cells[index][1])
+    else:
+        comm.equation_entry.delete(0, END) # Else, show the value in the cell
+        comm.equation_entry.insert(0, entry.get())
+    comm.cell_entry.delete(0, END)
+    comm.cell_entry.insert(0, position)
+
+
+# File Obj
+
+file = File(root)
 
 # Menu Bar
 
 menubar = Menu(root)
 
 fileMenu = Menu(menubar, tearoff=0)
-fileMenu.add_command(label='Open', accelerator="Ctrl+O")
-fileMenu.add_command(label='Save', accelerator="Ctrl+S")
-fileMenu.add_command(label='New', accelerator="Ctrl+N")
+fileMenu.add_command(label='Open', accelerator="Ctrl+O", command=file.open)
+fileMenu.add_command(label='Save', accelerator="Ctrl+S", command=file.save)
+fileMenu.add_command(label='New', accelerator="Ctrl+N", command=file.new)
 menubar.add_cascade(menu=fileMenu, label='File')
 
 editMenu = Menu(menubar, tearoff=0)
-editMenu.add_command(label="Copy", accelerator="Ctrl+C")
-editMenu.add_command(label="Cut", accelerator="Ctrl+X")
-editMenu.add_command(label="Paste", accelerator="Ctrl+V")
+editMenu.add_command(label="Copy", accelerator="Ctrl+C", command=copy)
+editMenu.add_command(label="Cut", accelerator="Ctrl+X", command=cut)
+editMenu.add_command(label="Paste", accelerator="Ctrl+V", command=paste)
 menubar.add_cascade(menu=editMenu, label='Edit')
 
 formatMenu = Menu(menubar, tearoff=0)
 formatMenu.add_command(label="Bold", accelerator="Ctrl+B", command=bold_text)
 formatMenu.add_command(label="Underline", accelerator="Ctrl+U", command=underline_text)
 formatMenu.add_command(label="Italics", accelerator="Ctrl+U", command=italics_text)
-formatMenu.add_command(label="Strikethrough", accelerator="Ctrl+T")
+formatMenu.add_command(label="Strikethrough", accelerator="Ctrl+T", command=strike_through_text)
 formatMenu.add_command(label="Text Color")
 menubar.add_cascade(menu=formatMenu, label='Format')
 
@@ -205,13 +332,13 @@ strike_through_icon = ImageTk.PhotoImage(image=strike_through_image)
 open_icon = ImageTk.PhotoImage(image=open_image)
 new_icon = ImageTk.PhotoImage(image=new_image)
 
-new_button = Button(tool_bar_frame, image=new_icon)
-open_button = Button(tool_bar_frame, image=open_icon)
-save_button = Button(tool_bar_frame, image=save_icon)
+new_button = Button(tool_bar_frame, image=new_icon, command=file.new)
+open_button = Button(tool_bar_frame, image=open_icon, command=file.open)
+save_button = Button(tool_bar_frame, image=save_icon, command=file.save)
 bold_button = Button(tool_bar_frame, image=bold_icon, command=bold_text)
-italics_button = Button(tool_bar_frame, image=italics_icon, command=bold_text)
-underline = Button(tool_bar_frame, image=underline_icon, command=bold_text)
-strikethrough_button = Button(tool_bar_frame, image=strike_through_icon, command=bold_text)
+italics_button = Button(tool_bar_frame, image=italics_icon, command=italics_text)
+underline = Button(tool_bar_frame, image=underline_icon, command=underline_text)
+strikethrough_button = Button(tool_bar_frame, image=strike_through_icon, command=strike_through_text)
 bg_label = Label(tool_bar_frame, text="Background")
 fg_label = Label(tool_bar_frame, text="Text Color")
 bg_color_button = Button(tool_bar_frame, background='white', command=change_bg)
@@ -266,6 +393,7 @@ for i in range(40):
     row_label = Label(row_frame, text=f"{i + 1}", relief=RAISED, width=5)
     row_label.pack(fill=BOTH, side=TOP)
 
+
 for label in labels_columns:
     column_frame = Frame(cell_frame)
     column_frame.pack(side=LEFT)
@@ -274,20 +402,23 @@ for label in labels_columns:
     for i in range(40):
         cell = Entry(column_frame)
         cell.configure(font=('Helvetica', 12), borderwidth=0)
-        cells.append(cell)
+        cells.append([cell, ""])
         cell.pack()
-
-# root.bind('<Control_L>o', file.open)
-# root.bind('<Control_L>s', file.save)
-# root.bind('<Control_L>n', file.new)
-root.bind('<Control_L>b', bold_text)
-root.bind('<Control_L>u', underline_text)
-root.bind('<Control_L>i', italics_text)
-root.bind('<Control_L>t', strike_through_text)
-root.bind('<Button-1>', update_color_buttons)
 
 # Status
 status_bar = Label(status_frame, text="This is the status bar", relief='sunken')
 status_bar.pack(fill=X, side=BOTTOM)
+
+# Bindings
+
+root.bind('<Control_L>o', file.open)
+root.bind('<Control_L>s', file.save)
+root.bind('<Control_L>n', file.new)
+root.bind('<Control_L>b', bold_text)
+root.bind('<Control_L>u', underline_text)
+root.bind('<Control_L>i', italics_text)
+root.bind('<Control_L>t', strike_through_text)
+root.bind('<Button-1>', update_cells)
+
 
 root.mainloop()
