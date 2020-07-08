@@ -152,40 +152,45 @@ root.geometry('1500x950')
 
 cells = []
 
+if os.name == 'nt':
+    font_size = 11
+else:
+    font_size = 12
+
 
 def bold_text(*args):
     entry = cell_frame.focus_get()
     if 'bold' in entry.cget('font'):
-        entry.configure(font=('Helvetica', 11))
+        entry.configure(font=('Helvetica', font_size))
     else:
-        entry.configure(font=('Helvetica', 11, 'bold'))
+        entry.configure(font=('Helvetica', font_size, 'bold'))
     return "break"
 
 
 def italics_text(*args):
     entry = cell_frame.focus_get()
     if 'italic' in entry.cget('font'):
-        entry.configure(font=('Helvetica', 11))
+        entry.configure(font=('Helvetica', font_size))
     else:
-        entry.configure(font=('Helvetica', 11, 'italic'))
+        entry.configure(font=('Helvetica', font_size, 'italic'))
     return "break"
 
 
 def underline_text(*args):
     entry = cell_frame.focus_get()
     if 'underline' in entry.cget('font'):
-        entry.configure(font=('Helvetica', 11))
+        entry.configure(font=('Helvetica', font_size))
     else:
-        entry.configure(font=('Helvetica', 11, 'underline'))
+        entry.configure(font=('Helvetica', font_size, 'underline'))
     return "break"
 
 
 def strike_through_text(*args):
     entry = cell_frame.focus_get()
     if 'overstrike' in entry.cget('font'):
-        entry.configure(font=('Helvetica', 11))
+        entry.configure(font=('Helvetica', font_size))
     else:
-        entry.configure(font=('Helvetica', 11, 'overstrike'))
+        entry.configure(font=('Helvetica', font_size, 'overstrike'))
     return "break"
 
 
@@ -402,9 +407,9 @@ for label in labels_columns:
     for i in range(40):
         cell = Entry(column_frame)
         if os.name == 'nt':
-            cell.configure(font=('Helvetica', 11))
+            cell.configure(font=('Helvetica', font_size))
         else:
-            cell.configure(font=('Helvetica', 11), borderwidth=0)
+            cell.configure(font=('Helvetica', font_size), borderwidth=0)
         cells.append([cell, ""])
         cell.pack()
 
