@@ -4,10 +4,38 @@ from tkinter import colorchooser
 from tkinter import filedialog
 from tkinter import messagebox
 from decimal import Decimal
+from datetime import datetime
 import re
 import os
 import pickle
 from PIL import Image, ImageTk
+
+"""
+Discount Microsoft Excel
+Written by Joshua Kitchen - July 2020
+
+How the .dme file extension works 
+----------------------------------------------------------------------------------------------------------------------
+
+Some files can be saved as a .dme. it was made up by me as a solution to saving the users formatting. When a file is 
+saved, all the cell text, formatting, colors, and equations are saved to a list (in that order). The list is then 
+pickled. When a file is opened, the the attributes from the pickled file are looped through and added to their 
+respective cell (attributes are saved in the same order, so indexes in the attributes list line up with the list of 
+entry objects) """
+
+
+# master list for all entry objects acting as cells. Each cell can be accessed by this list. The function
+# 'get_cell_index' will return the index of cell given the actual entry object, and the CommandLine.get_cell_index
+# method will return the index of a cell given it's coordinates. Each value in the list is a list containing two
+# values: the entry object and an equation associated with it ('' by default). To access the entry box itself,
+# one must write: cells[cell_index][0]
+
+cells = []
+
+if os.name == 'nt':
+    font_size = 11
+else:
+    font_size = 12
 
 
 class File:
@@ -18,6 +46,7 @@ class File:
         self.master.title(self.fileName)
 
     def save(self, *args):
+        fileNameOld = self.fileName  # in case save operations fail, we can reset the file name
         if self.fileName == "Untitled.dme":
             self.fileName = filedialog.asksaveasfilename(filetypes=(('*.dme', '*.dme'), ('*.csv', '*.csv')))
             if self.fileName == ():
@@ -25,21 +54,26 @@ class File:
         save_data = []
         for cell in cells:
             save_data.append(
-                [cell[0].get(), cell[0].cget("font"), cell[0].cget("background"), cell[0].cget("foreground"), cell[1]]
+                [cell[0].get(), cell[0].cget("font"), cell[0].cget("background"), cell[0].cget("foreground"), cell[1]] # cell[1] == and equation associated with the cell
             )
         try:
             with open(self.fileName, 'wb') as save_file:
                 pickle.dump(save_data, save_file)
             self.master.title(self.fileName.split("/")[-1])
+            last_save.set(f"Last Save: {datetime.now().strftime('%I:%M %p')}")
         except FileNotFoundError:
             messagebox.showerror(title="Error", message="File not found")
+            self.fileName = fileNameOld
         except PermissionError:
-            messagebox.showerror(title="Error", message="Current user does not have permission to save this file")
+            messagebox.showerror(title="Error", message="Current user does not have permission to save this to this"
+                                                        "directory")
+            self.fileName = fileNameOld
         except OSError:
             messagebox.showerror(title="Error", message="Cannot save file")
+            self.fileName = fileNameOld
 
     def open(self, *args):
-        fileNameOld = self.fileName
+        fileNameOld = self.fileName  # in case open operations fail, we can reset the file name
         self.fileName = filedialog.askopenfilename(filetypes=(('*.dme', '*.dme'), ('*.csv', '*.csv')))
         if self.fileName == ():
             return
@@ -51,11 +85,13 @@ class File:
                 cell[0].configure(font=data[1], background=data[2], foreground=data[3])
                 cell[1] = data[4]
             self.master.title(self.fileName.split("/")[-1])
+            last_save.set(f"Last Save: ")
         except FileNotFoundError:
             messagebox.showerror(title="Error", message="File not found")
             self.fileName = fileNameOld
         except PermissionError:
-            messagebox.showerror(title="Error", message="Current user does not have permission to open this file")
+            messagebox.showerror(title="Error", message="Current user does not have permission to open files"
+                                                        "from this directory")
             self.fileName = fileNameOld
         except OSError:
             messagebox.showerror(title="Error", message="Cannot open file")
@@ -69,7 +105,7 @@ class File:
             self.master.title(self.fileName)
             for cell in cells:
                 cell[0].delete(0, END)
-                cell[0].configure(font=('Helvetica', 11), background='#FFFFFF', foreground='#000000')
+                cell[0].configure(font=('Helvetica', font_size), background='#FFFFFF', foreground='#000000')
         elif answer is None:
             return
         else:
@@ -77,15 +113,16 @@ class File:
             self.master.title(self.fileName)
             for cell in cells:
                 cell[0].delete(0, END)
-                cell[0].configure(font=('Helvetica', 12), background='#FFFFFF', foreground='#000000')
+                cell[0].configure(font=('Helvetica', font_size), background='#FFFFFF', foreground='#000000')
+            last_save.set(f"Last Save: ")
 
 
 class CommandLine:
     def __init__(self, master):
-        self.key_words = ['AVERAGE', 'SUM', 'DIFFERENCE', 'PRODUCT', 'DIVIDEND']
+        # dict that converts column letters into an index for the 'cells' list
         self.letter_map = {'A': 0, 'B': 40, 'C': 80, 'D': 120, 'E': 160, 'F': 200, 'G': 240, 'H': 280, 'I': 320,
                            'J': 360, 'K': 400}
-        self.cell_pattern = re.compile(r'[A-K]\d{1,2}')
+        self.cell_coord_pattern = re.compile(r'[A-K]\d{1,2}')
         self.paddingx = 5
         self.paddingy = 0
         self.master = master
@@ -94,7 +131,7 @@ class CommandLine:
         self.equal_sign = Label(self.master, text="=")
         self.equation_entry = ttk.Entry(self.master, width=40)
         self.cell_entry_label = Label(self.master, text="Cell")
-        self.equation_entry_label = Label(self.master, text="Equation/Value")
+        self.equation_entry_label = Label(self.master, text="Equation")
 
         self.cell_entry_label.grid(row=0, column=1, padx=self.paddingx, pady=self.paddingy)
         self.equation_entry_label.grid(row=0, column=3, padx=self.paddingx, pady=self.paddingy)
@@ -103,33 +140,36 @@ class CommandLine:
         self.equal_sign.grid(row=1, column=2, padx=self.paddingx, pady=self.paddingy)
         self.equation_entry.grid(row=1, column=3, padx=self.paddingx, pady=self.paddingy)
 
-    def get_cell_index(self, value):
+    def get_cell_index(self, cell_coord):
         index = None
-        if re.fullmatch(self.cell_pattern, value):
-            if len(value) == 2:
-                letter = value[0]
-                number = value[1]
+        if re.fullmatch(self.cell_coord_pattern, cell_coord):
+            if len(cell_coord) == 2:
+                letter = cell_coord[0]
+                number = cell_coord[1]
                 index = int(self.letter_map.get(letter)) + (int(number) - 1)
             else:
-                letter = value[0]
-                number = value[1] + value[2]
+                letter = cell_coord[0]
+                number = cell_coord[1] + cell_coord[2]
                 index = int(self.letter_map.get(letter)) + (int(number) - 1)
         return index
 
-    def parse_equation(self, in_value):
+    def parse_equation(self, in_equation):
         global cells
-        matches = re.findall(self.cell_pattern, in_value)
+        matches = re.findall(self.cell_coord_pattern, in_equation)
         for match in matches:
             cell_index = self.get_cell_index(match)
             cell_value = cells[cell_index][0].get()
-            if cell_value is None:
-                in_value = in_value.replace(match, 0)
-            in_value = in_value.replace(match, cell_value)
+            if cell_value == '':
+                in_equation = in_equation.replace(match, 0)
+            else:
+                in_equation = in_equation.replace(match, cell_value)
         try:
-            eval(in_value, {})
-            return eval(in_value, {})
+            answer = eval(in_equation, {})
+            return answer
         except NameError:
-            return "Error"
+            return "NameError"
+        except SyntaxError:
+            return "Syntax Error"
 
     def insert(self, saved_equation=None, cell_obj=None):
         if saved_equation:
@@ -146,16 +186,86 @@ class CommandLine:
             cells[cell_index][1] = self.equation_entry.get()
 
 
+class Features:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Features")
+        self.text = Text(self.master, wrap=WORD)
+        self.scrollbar = Scrollbar(self.master)
+        self.text.pack(side=LEFT)
+        self.scrollbar.pack(side=RIGHT, fill=Y)
+        self.scrollbar.configure(command=self.text.yview)
+        try:
+            with open('README', 'r') as readme_file:
+                self.readme_text = readme_file.read()
+        except FileNotFoundError:
+            self.readme_text = "Your readme file was deleted. Guess you'll never know how this program works."
+        self.text.insert(1.0, self.readme_text)
+        self.text.configure(state='disabled')
+
+
 root = Tk()
+
+main_icon = PhotoImage(file=os.path.join('icons', 'main_icon.png'))
+
+root.iconphoto(True, main_icon)
 
 root.geometry('1500x950')
 
-cells = []
 
-if os.name == 'nt':
-    font_size = 11
-else:
-    font_size = 12
+def get_cell_index(entry_obj):
+    global cells
+    index = 0
+    for cell in cells:
+        if cell[0] == entry_obj:
+            return index
+        index += 1
+
+
+def update_cells(*args):
+    global bg_color_button
+    global fg_color_button
+
+    entry = cell_frame.focus_get()
+
+    # update color buttons to match the cell in focus
+    bg = entry.cget("background")
+    fg = entry.cget("foreground")
+    bg_color_button.configure(background=bg)
+    fg_color_button.configure(background=fg)
+
+    # Update all cells with an equation
+    for cell in cells:
+        if cell[1] != '':
+            if cell[0].get() == '':  # get rid of equation if the cell has been cleared
+                cell[1] = ''
+            else:
+                command_line.insert(cell[1], cell[0])
+        else:
+            pass
+
+    # Update the equation entry box to show equations or values (if there is no equation)
+    #
+    # find out the coordinates to the selected entry box
+    index = get_cell_index(entry)
+    coords = index / 40
+    coords = Decimal(str(coords))
+    row = Decimal(str(coords)) % 1
+    column = coords - row
+    row = (row*40) + 1
+    row = int(row)
+    column = int(column)
+    letters = list(command_line.letter_map.keys())
+    letter = letters[column]
+    position = f"{letter}{row}"
+    if cells[index][1] != '':  # if cell value determined by equation, show it
+        command_line.equation_entry.delete(0, END)
+        command_line.equation_entry.insert(0, cells[index][1])
+    else:  # Else, show the value in the cell
+        command_line.equation_entry.delete(0, END)
+        command_line.equation_entry.insert(0, entry.get())
+    command_line.cell_entry.delete(0, END)
+    command_line.cell_entry.insert(0, position)
 
 
 def bold_text(*args):
@@ -198,12 +308,14 @@ def change_bg(*args):
     entry = cell_frame.focus_get()
     color = colorchooser.askcolor()
     entry.configure(background=color[1])
+    update_cells()
 
 
 def change_fg(*args):
     entry = cell_frame.focus_get()
     color = colorchooser.askcolor()
     entry.configure(foreground=color[1])
+    update_cells()
 
 
 def copy(*args):
@@ -221,53 +333,85 @@ def paste(*args):
     entry.event_generate('<<Paste>>')
 
 
-def update_cells(*args):
-    global bg_color_button
-    global fg_color_button
-
-    # update color buttons to match the cell in focus
-    entry = cell_frame.focus_get()
-    bg = entry.cget("background")
-    fg = entry.cget("foreground")
-    bg_color_button.configure(background=bg)
-    fg_color_button.configure(background=fg)
-
-    # Update all cells with an equation
-    for cell in cells:
-        if cell[1] != '':
-            if cell[0].get() == '':
-                cell[1] = ''
-            else:
-                comm.insert(cell[1], cell[0])
-        else:
-            pass
-
-    # Get current cell in focus
-    index = 0
-    for cell in cells:
-        if cell[0] == entry:
-            break
-        index += 1
-
-    # find out the coordinates to the selected entry box
-    coords = index / 40
-    coords = Decimal(str(coords))
-    row = Decimal(str(coords)) % 1
-    column = coords - row
-    row = (row*40) + 1
-    row = int(row)
-    column = int(column)
-    letters = list(comm.letter_map.keys())
-    letter = letters[column]
-    position = f"{letter}{row}"
-    if cells[index][1] != '':  # if cell value determined by equation, show it
-        comm.equation_entry.delete(0, END)
-        comm.equation_entry.insert(0, cells[index][1])
+def nav_left(*args):
+    global cells
+    current_cell = cell_frame.focus_get()
+    cell_index = get_cell_index(current_cell)
+    try:
+        new_index = cell_index - 40
+    except TypeError:
+        return
+    if new_index < 0:
+        return
     else:
-        comm.equation_entry.delete(0, END) # Else, show the value in the cell
-        comm.equation_entry.insert(0, entry.get())
-    comm.cell_entry.delete(0, END)
-    comm.cell_entry.insert(0, position)
+        cells[new_index][0].focus_set()
+        update_cells()
+
+
+def nav_right(*args):
+    global cells
+    current_cell = cell_frame.focus_get()
+    cell_index = get_cell_index(current_cell)
+    try:
+        new_index = cell_index + 40
+    except TypeError:
+        return
+    if new_index > 440:
+        return
+    else:
+        cells[new_index][0].focus_set()
+        update_cells()
+
+
+def nav_up(*args):
+    global cells
+    current_cell = cell_frame.focus_get()
+    cell_index = get_cell_index(current_cell)
+    try:
+        new_index = cell_index - 1
+    except TypeError:
+        return
+    if new_index < 0:
+        return
+    else:
+        cells[new_index][0].focus_set()
+        update_cells()
+
+
+def nav_down(*args):
+    global cells
+    current_cell = cell_frame.focus_get()
+    cell_index = get_cell_index(current_cell)
+    try:
+        new_index = cell_index + 1
+    except TypeError:
+        return
+    if new_index > 440:
+        return
+    else:
+        cells[new_index][0].focus_set()
+        update_cells()
+
+                          
+def show_about():
+    a = Toplevel()
+    a.title("About Discount Microsoft Word™")
+    help_text = "A poor man's Microsoft Word made with Tkinter and Python. Extremely simple with only\n" \
+                "the most basic functions of a word processor.\n" \
+                "\n" \
+                "What more do you expect from something called \'Discount Microsoft Word™\'?"
+    title_label = Label(a, text="Discount Microsoft Word™\nWritten by Joshua Kitchen - June 2020\n", font='bold',
+                        justify='center')
+    about_label = Label(a, text=help_text)
+    title_label.pack()
+    about_label.pack()
+
+
+def show_features():
+    b = Toplevel()
+    b.minsize(width=50, height=75)
+    b.title("Help")
+    help_text = Features(b)
 
 
 # File Obj
@@ -295,12 +439,13 @@ formatMenu.add_command(label="Bold", accelerator="Ctrl+B", command=bold_text)
 formatMenu.add_command(label="Underline", accelerator="Ctrl+U", command=underline_text)
 formatMenu.add_command(label="Italics", accelerator="Ctrl+U", command=italics_text)
 formatMenu.add_command(label="Strikethrough", accelerator="Ctrl+T", command=strike_through_text)
-formatMenu.add_command(label="Text Color")
+formatMenu.add_command(label="Text Color", command=change_fg)
+formatMenu.add_command(label="Background Color", command=change_bg)
 menubar.add_cascade(menu=formatMenu, label='Format')
 
 helpMenu = Menu(menubar, tearoff=0)
-helpMenu.add_command(label='Features')
-helpMenu.add_command(label='About')
+helpMenu.add_command(label='Features', command=show_features)
+helpMenu.add_command(label='About', command=show_about)
 menubar.add_cascade(menu=helpMenu, label='Help')
 root.config(menu=menubar)
 
@@ -363,7 +508,7 @@ fg_color_button.pack(side=LEFT, padx=paddingx, pady=paddingy)
 
 # Command Line
 
-comm = CommandLine(command_line_frame)
+command_line = CommandLine(command_line_frame)
 
 # Cells
 
@@ -414,8 +559,10 @@ for label in labels_columns:
         cell.pack()
 
 # Status
-status_bar = Label(status_frame, text="This is the status bar", relief='sunken')
-status_bar.pack(fill=X, side=BOTTOM)
+last_save = StringVar()
+last_save.set("Last Save: ")
+status_bar = Label(status_frame, textvariable=last_save, justify=LEFT)
+status_bar.pack(fill=X, side=LEFT)
 
 # Bindings
 
@@ -427,6 +574,24 @@ root.bind('<Control_L>u', underline_text)
 root.bind('<Control_L>i', italics_text)
 root.bind('<Control_L>t', strike_through_text)
 root.bind('<Button-1>', update_cells)
+root.bind('<Left>', nav_left)
+root.bind('<Right>', nav_right)
+root.bind('<Up>', nav_up)
+root.bind('<Down>', nav_down)
 
+
+def close():
+    name = file.fileName.split("/")[-1]
+    answer = messagebox.askyesnocancel(title="Save?", message=f"Do you want to save {name} before quitting?")
+    if answer is True:
+        file.save()
+        root.quit()
+    elif answer is None:
+        return
+    else:
+        root.quit()
+
+
+root.protocol('WM_DELETE_WINDOW', close)
 
 root.mainloop()
