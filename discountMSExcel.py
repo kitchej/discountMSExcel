@@ -32,6 +32,14 @@ entry objects) """
 
 cells = []
 
+colored_cells = []  # needed to reset cell colors after selecting them
+
+entered_cells = []  # keeps track of selected cells
+
+clipboard = []
+
+root_entry = None  # need for multi_select functionality
+
 if os.name == 'nt':
     font_size = 11
 else:
@@ -50,11 +58,12 @@ class File:
         if self.fileName == "Untitled.dme":
             self.fileName = filedialog.asksaveasfilename(filetypes=(('*.dme', '*.dme'), ('*.csv', '*.csv')))
             if self.fileName == ():
+                print('self.filename == ()', self.fileName)
                 return
         save_data = []
         for cell in cells:
             save_data.append(
-                [cell[0].get(), cell[0].cget("font"), cell[0].cget("background"), cell[0].cget("foreground"), cell[1]] # cell[1] == and equation associated with the cell
+                [cell[0].get(), cell[0].cget("font"), cell[0].cget("background"), cell[0].cget("foreground"), cell[1]] # cell[1] == an equation associated with the cell
             )
         try:
             with open(self.fileName, 'wb') as save_file:
@@ -81,6 +90,8 @@ class File:
             with open(self.fileName, 'rb') as open_file:
                 save_data = pickle.load(open_file)
             for cell, data in zip(cells, save_data):
+                cell[0].delete(0, END)
+                cell[0].configure(font=('Helvetica', font_size), background='#ffffff', foreground='#000000')
                 cell[0].insert(0, data[0])
                 cell[0].configure(font=data[1], background=data[2], foreground=data[3])
                 cell[1] = data[4]
@@ -109,7 +120,7 @@ class File:
         elif answer is None:
             return
         else:
-            self.fileName = "Untitled.dmw"
+            self.fileName = "Untitled.dme"
             self.master.title(self.fileName)
             for cell in cells:
                 cell[0].delete(0, END)
@@ -126,10 +137,10 @@ class CommandLine:
         self.paddingx = 5
         self.paddingy = 0
         self.master = master
-        self.insert_button = ttk.Button(self.master, text="Insert", command=self.insert)
-        self.cell_entry = ttk.Entry(self.master, width=5)
+        self.insert_button = Button(self.master, text="Insert", command=self.insert)
+        self.cell_entry = Entry(self.master, width=5)
         self.equal_sign = Label(self.master, text="=")
-        self.equation_entry = ttk.Entry(self.master, width=40)
+        self.equation_entry = Entry(self.master, width=40)
         self.cell_entry_label = Label(self.master, text="Cell")
         self.equation_entry_label = Label(self.master, text="Equation")
 
@@ -228,6 +239,15 @@ def update_cells(*args):
 
     entry = cell_frame.focus_get()
 
+    if not isinstance(entry, Entry):
+        return
+
+    if entry == command_line.equation_entry:
+        return
+
+    if entry == command_line.cell_entry:
+        return
+
     # update color buttons to match the cell in focus
     bg = entry.cget("background")
     fg = entry.cget("foreground")
@@ -267,9 +287,25 @@ def update_cells(*args):
     command_line.cell_entry.delete(0, END)
     command_line.cell_entry.insert(0, position)
 
+    # Reset cells after deselecting
+    global root_entry
+    x, y = root.winfo_pointerxy()
+    root_entry = root.winfo_containing(x, y)
+    for cell in entered_cells:
+        cell.configure(background='#ffffff')
+    for colored_cell in colored_cells:
+        colored_cell[0].configure(background=colored_cell[1])
+    entered_cells.clear()
+
 
 def bold_text(*args):
     entry = cell_frame.focus_get()
+    if entry == command_line.equation_entry:
+        return
+
+    if entry == command_line.cell_entry:
+        return
+
     if 'bold' in entry.cget('font'):
         entry.configure(font=('Helvetica', font_size))
     else:
@@ -279,6 +315,12 @@ def bold_text(*args):
 
 def italics_text(*args):
     entry = cell_frame.focus_get()
+    if entry == command_line.equation_entry:
+        return
+
+    if entry == command_line.cell_entry:
+        return
+
     if 'italic' in entry.cget('font'):
         entry.configure(font=('Helvetica', font_size))
     else:
@@ -288,6 +330,12 @@ def italics_text(*args):
 
 def underline_text(*args):
     entry = cell_frame.focus_get()
+    if entry == command_line.equation_entry:
+        return
+
+    if entry == command_line.cell_entry:
+        return
+
     if 'underline' in entry.cget('font'):
         entry.configure(font=('Helvetica', font_size))
     else:
@@ -297,6 +345,12 @@ def underline_text(*args):
 
 def strike_through_text(*args):
     entry = cell_frame.focus_get()
+    if entry == command_line.equation_entry:
+        return
+
+    if entry == command_line.cell_entry:
+        return
+
     if 'overstrike' in entry.cget('font'):
         entry.configure(font=('Helvetica', font_size))
     else:
@@ -306,36 +360,37 @@ def strike_through_text(*args):
 
 def change_bg(*args):
     entry = cell_frame.focus_get()
+    if entry == command_line.equation_entry:
+        return
+
+    if entry == command_line.cell_entry:
+        return
+
     color = colorchooser.askcolor()
+    if color[1] == '#ffffff':
+        colored_cells.remove([entry, entry.cget('background')])
+    else:
+        colored_cells.append([entry, color[1]])
     entry.configure(background=color[1])
-    update_cells()
 
 
 def change_fg(*args):
     entry = cell_frame.focus_get()
+    if entry == command_line.equation_entry:
+        return
+
+    if entry == command_line.cell_entry:
+        return
+
     color = colorchooser.askcolor()
     entry.configure(foreground=color[1])
     update_cells()
 
 
-def copy(*args):
-    entry = cell_frame.focus_get()
-    entry.event_generate('<<Copy>>')
-
-
-def cut(*args):
-    entry = cell_frame.focus_get()
-    entry.event_generate('<<Cut>>')
-
-
-def paste(*args):
-    entry = cell_frame.focus_get()
-    entry.event_generate('<<Paste>>')
-
-
 def nav_left(*args):
     global cells
     current_cell = cell_frame.focus_get()
+
     cell_index = get_cell_index(current_cell)
     try:
         new_index = cell_index - 40
@@ -392,15 +447,99 @@ def nav_down(*args):
         cells[new_index][0].focus_set()
         update_cells()
 
-                          
+
+def multi_copy(*args):
+    global clipboard
+    clipboard.clear()
+    for cell in entered_cells:
+        cell.configure(background='#ffffff')
+        clipboard.append(cell.get())
+    for colored_cell in colored_cells:
+        colored_cell[0].configure(background=colored_cell[1])
+    entered_cells.clear()
+    return 'break'
+
+
+def multi_cut(*args):
+    global clipboard
+    clipboard.clear()
+    for cell in entered_cells:
+        cell.configure(background='#ffffff')
+        clipboard.append(cell.get())
+        cell.delete(0, END)
+    for colored_cell in colored_cells:
+        colored_cell[0].configure(background=colored_cell[1])
+    entered_cells.clear()
+    return 'break'
+
+
+def multi_paste(*args):
+    first_entry = root.focus_get()
+    index = get_cell_index(first_entry)
+
+    for value in clipboard:
+        cells[index][0].delete(0, END)
+        cells[index][0].insert(0, value)
+        index += 1
+    return 'break'
+
+
+def multi_delete(*args):
+    if entered_cells:
+        for cell in entered_cells:
+            cell.delete(0, END)
+        for cell in entered_cells:
+            cell.configure(background='#ffffff')
+        for colored_cell in colored_cells:
+            colored_cell[0].configure(background=colored_cell[1])
+
+
+def select_cells(*args):
+    global root_entry
+
+    x, y = root.winfo_pointerxy()
+    entry = root.winfo_containing(x, y)
+
+    if entry == command_line.equation_entry:
+        return
+
+    if entry == command_line.cell_entry:
+        return
+
+    if not isinstance(entry, Entry):
+        return
+
+    if entry == root_entry:  # I.E we haven't left the cell we clicked on, so don't do anything
+        return
+    else:  # Unless we leave, then highlight it and add it to 'entered_cells' if it is not already
+        if root_entry not in entered_cells:
+            root_entry.configure(background='#add8e6')
+            entered_cells.append(root_entry)
+
+    try:
+        if entry not in entered_cells:
+            entry.focus_set()
+            entry.configure(background='#add8e6')
+            entered_cells.append(entry)
+    except AttributeError:
+        return
+
+    if entry != entered_cells[-1]:  # for deselecting cells when the cursor moves out of an cell
+        entry.focus_set()
+        entered_cells[-1].configure(background='#ffffff')
+        entered_cells.pop()
+        for colored_cell in colored_cells:
+            colored_cell[0].configure(background=colored_cell[1])
+
+
 def show_about():
     a = Toplevel()
-    a.title("About Discount Microsoft Word™")
-    help_text = "A poor man's Microsoft Word made with Tkinter and Python. Extremely simple with only\n" \
-                "the most basic functions of a word processor.\n" \
+    a.title("About Discount Microsoft Excel™")
+    help_text = "A poor man's Microsoft Excel made with Tkinter and Python. Extremely simple with only\n" \
+                "the most basic functions of a spreadsheet.\n" \
                 "\n" \
-                "What more do you expect from something called \'Discount Microsoft Word™\'?"
-    title_label = Label(a, text="Discount Microsoft Word™\nWritten by Joshua Kitchen - June 2020\n", font='bold',
+                "What more do you expect from something called \'Discount Microsoft Excel™\'?"
+    title_label = Label(a, text="Discount Microsoft Excel™\nWritten by Joshua Kitchen - July 2020\n", font='bold',
                         justify='center')
     about_label = Label(a, text=help_text)
     title_label.pack()
@@ -429,9 +568,9 @@ fileMenu.add_command(label='New', accelerator="Ctrl+N", command=file.new)
 menubar.add_cascade(menu=fileMenu, label='File')
 
 editMenu = Menu(menubar, tearoff=0)
-editMenu.add_command(label="Copy", accelerator="Ctrl+C", command=copy)
-editMenu.add_command(label="Cut", accelerator="Ctrl+X", command=cut)
-editMenu.add_command(label="Paste", accelerator="Ctrl+V", command=paste)
+editMenu.add_command(label="Copy", accelerator="Ctrl+C", command=multi_copy)
+editMenu.add_command(label="Cut", accelerator="Ctrl+X", command=multi_cut)
+editMenu.add_command(label="Paste", accelerator="Ctrl+V", command=multi_paste)
 menubar.add_cascade(menu=editMenu, label='Edit')
 
 formatMenu = Menu(menubar, tearoff=0)
@@ -578,6 +717,11 @@ root.bind('<Left>', nav_left)
 root.bind('<Right>', nav_right)
 root.bind('<Up>', nav_up)
 root.bind('<Down>', nav_down)
+root.bind('<B1-Motion>', select_cells)
+root.bind('<Control_L>c', multi_copy)
+root.bind('<Control_L>x', multi_cut)
+root.bind('<Control_L>v', multi_paste)
+root.bind('<BackSpace>', multi_delete)
 
 
 def close():
