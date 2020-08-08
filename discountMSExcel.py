@@ -1,4 +1,4 @@
-from tkinter import *
+tfrom tkinter import *
 import tkinter.ttk as ttk
 from tkinter import colorchooser
 from tkinter import filedialog
@@ -797,7 +797,7 @@ scroll_y.pack(side=RIGHT, fill=Y, expand=0)
 scroll_x = ttk.Scrollbar(cell_frame_master, orient=HORIZONTAL)
 scroll_x.pack(side=BOTTOM, fill=X, expand=0)
 
-canvas = Canvas(cell_frame_master, yscrollcommand=scroll_y.set, xscrollcommand=scroll_x.set)
+canvas = Canvas(cell_frame_master, yscrollcommand=scroll_y.set, xscrollcommand=scroll_x.set, borderwidth=0)
 canvas.pack(fill=BOTH)
 scroll_y.configure(command=canvas.yview)
 scroll_x.configure(command=canvas.xview)
@@ -868,7 +868,7 @@ def close():
     elif answer is None:
         return
     else:
-        root.quit()
+        root.destory()
 
 
 root.protocol('WM_DELETE_WINDOW', close)
