@@ -797,7 +797,7 @@ scroll_y.pack(side=RIGHT, fill=Y, expand=0)
 scroll_x = ttk.Scrollbar(cell_frame_master, orient=HORIZONTAL)
 scroll_x.pack(side=BOTTOM, fill=X, expand=0)
 
-canvas = Canvas(cell_frame_master, yscrollcommand=scroll_y.set, xscrollcommand=scroll_x.set, borderwidth=0)
+canvas = Canvas(cell_frame_master, yscrollcommand=scroll_y.set, xscrollcommand=scroll_x.set, highlightthickness=0)
 canvas.pack(fill=BOTH)
 scroll_y.configure(command=canvas.yview)
 scroll_x.configure(command=canvas.xview)
