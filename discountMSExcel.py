@@ -5,6 +5,7 @@ from tkinter import filedialog
 from tkinter import messagebox
 from decimal import Decimal
 from datetime import datetime
+from datetime import timedelta
 import re
 import os
 import pickle
@@ -24,11 +25,11 @@ respective cell (attributes are saved in the same order, so indexes in the attri
 entry objects) """
 
 
-# master list for all entry objects acting as cells. Each cell can be accessed by this list. The function
+# 'cells' is the master list for all entry objects acting as cells. Each cell can be accessed by this list. The function
 # 'get_cell_index' will return the index of cell given the actual entry object, and the CommandLine.get_cell_index
-# method will return the index of a cell given it's coordinates. Each value in the list is a list containing two
-# values: the entry object and an equation associated with it ('' by default). To access the entry box itself,
-# one must write: cells[cell_index][0]
+# method will return the index of a cell given it's coordinates (A1, B3, F12, etc). Each value in the list is a list
+# containing two values: the entry object and an equation associated with it ('' by default). To access the entry box
+# itself, one must write: cells[cell_index][0]
 
 cells = []
 
@@ -164,23 +165,157 @@ class CommandLine:
                 index = int(self.letter_map.get(letter)) + (int(number) - 1)
         return index
 
+    @staticmethod
+    def add(in_args):
+        out_value = 0
+        for arg in in_args:
+            try:
+                out_value = out_value + int(cells[arg][0].get())
+            except ValueError:
+                return 'ERROR'
+        return out_value
+
+    @staticmethod
+    def subtract(in_args):
+        out_value = 0
+        for arg in in_args:
+            try:
+                out_value = out_value - int(cells[arg][0].get())
+            except ValueError:
+                return 'ERROR'
+        return out_value
+
+    @staticmethod
+    def divide(in_args):
+        out_value = 0
+        for arg in in_args:
+            try:
+                out_value = out_value / int(cells[arg][0].get())
+            except ValueError:
+                return 'ERROR'
+            except ZeroDivisionError:
+                return 'ERROR'
+        return out_value
+
+    @staticmethod
+    def multiply(in_args):
+        out_value = 0
+        for arg in in_args:
+            try:
+                out_value = out_value * int(cells[arg][0].get())
+            except ValueError:
+                return 'ERROR'
+        return out_value
+
+    @staticmethod
+    def average(in_args):
+        out_value = 0
+        for arg in in_args:
+            try:
+                out_value = out_value + int(cells[arg][0].get())
+            except ValueError:
+                return 'ERROR'
+        return out_value / len(in_args)
+
+    @staticmethod
+    def get_time_delta(value):
+        matches = ['AM', 'PM', 'am', 'pm', 'Pm', 'Am']
+        if ':' not in value:
+            return 'ERROR'
+        if any(x in value for x in matches):  # Working with 12 hour format
+            value = value.split(" ")
+            time = value[0].split(":")
+            hours = int(time[0])
+            try:
+                minutes = int(time[1])
+            except IndexError:
+                minutes = 0
+            try:
+                seconds = int(time[2])
+            except IndexError:
+                seconds = 0
+
+            if value[1] == 'PM':
+                if hours == 12:
+                    pass
+                else:
+                    hours += 12
+            elif value[1] == 'AM':
+                if hours == 12:
+                    hours += 12
+        else:  # Working with 24 hour format
+            time = value.split(":")
+            hours = int(time[0])
+            minutes = int(time[1])
+            try:
+                seconds = int(time[2])
+            except IndexError:
+                seconds = 0
+        return timedelta(hours=hours, minutes=minutes, seconds=seconds)
+
+    def time_diff(self, in_args):
+        value1 = cells[in_args[0]][0].get()
+        value2 = cells[in_args[1]][0].get()
+
+        if self.get_time_delta(value1) == 'ERROR':
+            return 'ERROR'
+
+        if self.get_time_delta(value2) == 'ERROR':
+            return 'ERROR'
+
+        return self.get_time_delta(value1) - self.get_time_delta(value2)
+
+    def time_add(self, in_args):
+        added_time = timedelta()
+        for arg in in_args:
+            time_string = cells[arg][0].get()
+            time_delta = self.get_time_delta(time_string)
+            if time_delta == 'ERROR':
+                return "ERROR"
+            added_time = added_time + time_delta
+
+        return added_time
+
     def parse_equation(self, in_equation):
-        global cells
-        matches = re.findall(self.cell_coord_pattern, in_equation)
-        for match in matches:
-            cell_index = self.get_cell_index(match)
-            cell_value = cells[cell_index][0].get()
-            if cell_value == '':
-                in_equation = in_equation.replace(match, 0)
-            else:
-                in_equation = in_equation.replace(match, cell_value)
-        try:
-            answer = eval(in_equation, {})
-            return answer
-        except NameError:
-            return "NameError"
-        except SyntaxError:
-            return "Syntax Error"
+        equations = {
+            'ADD': self.add,
+            'SUB': self.subtract,
+            'MULTI': self.multiply,
+            'DIV': self.divide,
+            'AVERAGE': self.average,
+            'TIMEDIFF': self.time_diff,
+            'TIMEADD': self.time_add
+        }
+
+        in_equation = in_equation.split('(')
+        operator = in_equation[0]
+        args = in_equation[1].strip(')')
+
+        if len(args.split(":")) > 1:
+            args = args.split(':')
+
+            start_value = int(args[0][1])  # get row number
+            end_value = int(args[1][1])
+            column = args[0][0]  # get column letter
+
+            number_of_cells = end_value - start_value
+
+            included_cells = [args[0]]
+            for _ in range(number_of_cells):
+                start_value += 1
+                included_cells.append(f"{column}{start_value}")
+            args = included_cells
+        else:
+            args = args.split(',')
+
+        out_args = []
+
+        for arg in args:
+            out_args.append(self.get_cell_index(arg))
+
+        answer = equations[operator](out_args)
+
+        return answer
 
     def insert(self, saved_equation=None, cell_obj=None):
         if saved_equation:
