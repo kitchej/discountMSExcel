@@ -1,0 +1,132 @@
+Discount Microsoft Excel™ - Features
+
+
+Thank you for choosing Discount Microsoft Excel™! We promise absoulety nothing and cannot gaurentee a satisfying user experience. What we do guarnetee is that it MIGHT do what you want it to. We threw everying we had at this program, which wasn't a lot to be quite frank. Our lone coder (the others quit. Apparently we had bad dental) spent many sleepless nights cranking out this program, and we do say, he did a better job than we expected. Go Steve! Below is a list of features included in Discount Microsoft Excel™.
+
+
+Table of Contents:
+
+1. Layout
+2. Opening and Saving Files
+3. Editing Cells
+4. Formatting Cells
+5. Equations
+6. Status Bar
+7. What is .dme?
+
+
+LAYOUT
+------------------------------------------------------------------------------
+
+The interface consists of a menu bar (located at the top), a graphical toolbar (located below the menu bar), the equation entry bar(located below the toolbar), the cell table (located in the middle), and the status bar(located at the very bottom). We will refer to the menu bar as 'menu', the graphical toolbar as 'toolbar', the equation entry bar as 'equation bar', the cell table as 'Cell area', and the status bar simply as 'status bar.' 
+
+The cell area is organized in a gird system. The columns are marked with letters A-K and rows are marked with numbers 1-40. In total there are 440 cells to work with. That all Steve could give us, so if 440 cells isn't enough, then you picked the wrong program. 
+
+You can refer to cells by their coordinates withing the program. To access the very first cell, for example, you would type the first column letter 'A' followed by the first row number '1.' Together, 'A1.'
+
+
+OPENING AND SAVING FILES
+------------------------------------------------------------------------------
+
+To open a new file, you can either click on the 'File' option on the menu and then click 'Open', click on the folder icon on the toolbar, or press Ctrl + O. A file manager should open up which will allow you to choose your desired file. You can only select a Discount Microsoft Excel™ file (.dme, more on that in section 7) at the moment.
+
+To save a document, you can either click on the 'File' option on the menu and then click 'Save', click on the floppy disk icon on the toolbar, or press Ctrl + S. If saving a document for the first time, a file manager will appear asking you to name your document.
+
+To make a new document, you can either click on the 'File' option on the menu and then click 'New', click on the paper with the plus sign icon on the toolbar, or press Ctrl + N. The program will ask you to save first, then all cells and cell formatting will be cleared.
+
+
+EDITING CELLS
+------------------------------------------------------------------------------
+
+NOTE: Multi-cell copying, cutting, and pasting is very basic. It works well within one column, but selecting multiple rows within multiple columns and then pasting them somwhere else WILL have unintended results. 
+
+Copy - Select text within a cell, or while holding down the left mouse button, hover over multiple cells, then on the menu click 'Edit', and then 'Copy', or press Ctrl + C.
+
+Cut - Select text within a cell, or while holding down the left mouse button, hover over multiple cells, then on the menu click 'Edit', and then 'Cut', or press Ctrl + X.
+
+Paste - Select a cell then on the menu click 'Edit', and then 'Paste', or press Ctrl + V. If more than one cell was copied to the clipboard, the data will automaticly be placed in the cells below it.
+
+
+FORMATTING CELLS
+------------------------------------------------------------------------------
+
+Bold text - Highlight text withing a cell, click 'Format' on the menu, and then click 'Bold.' You can also click on the large 'B' on the toolbar or press Ctrl + B.
+
+Italicize text - Highlight text withing a cell, click 'Format' on the menu and then click 'Italicize.' You can also click on the slanted 'I' on the toolbar or press Ctrl + I.
+
+Underline text - Highlight text withing a cell, then click 'Format' on the menu and then click 'Underline.' You can also click on the underlined 'U' on the toolbar or press Ctrl + U.
+
+Strike Through text - Highlight text withing a cell then click 'Format' on the menu and then click 'Strikethrouhgh.' You can also click on the strike-throughed 'T' on the toolbar or press Ctrl + T.
+
+Text Color - Change color of text within a cell. Select a cell then from the menu, click 'Fomrat' then click 'Text Color.' You can also click the 'Text Color' button on the toolbar.
+
+Background Color - Change the background color of a cell. Select a cell then from the menu, click 'Fomrat' then click 'Background Color.' You can also click the 'Background Color' button on the toolbar.
+
+
+EQUATIONS
+------------------------------------------------------------------------------
+
+Steve said he is quite proud of how this feature turned out.
+
+Diagram 1: Overview of the equation bar
+Note: Not to scale
+
+Insert Button    Current Cell             Equation Entry
+   |                |                            |
+   V                V                            V
+|Insert|          |A1|          =        |                   |
+
+
+To select a cell in which to insert an equation, click on the desired cell or enter its coordinates in the 'Current Cell' entry box. Then you can write an equation in the 'Equation Entry' box. Equations are formatted as such: EQUATION(ARGS).  
+
+Example:
+
+|Insert|  |A4|  =  |ADD(A1,A2,A3)|
+
+Ouputs:
+
+    |      A      |
+
+| 1 | 4           |
+| 2 | 5           |
+| 3 | 6           |
+| 4 | 15          |
+
+
+To select a range of cells, one can use the ':' operator. Example:
+
+|Insert|  |A4|  =  |ADD(A1:A3)|
+
+
+Avalible equations:
+ADD - Adds selected cells
+SUB - Subtracts selected cells
+MULTI - Multiplies selected cells
+DIV - Divides selected cells
+AVRG - Finds the average of the selected cells
+TIMEDIFF - finds the diffrence between two times
+TIMEADD - adds time values together
+*Note: for operations involving time, the values MUST be formatted as a time. Args in brackets are optional:
+
+12-hour: HH:MM[:SS] PM/AM
+24-hour: HH:MM[:SS]
+
+All times are outputted in 24-hour format.
+
+
+THE STATUS BAR
+------------------------------------------------------------------------------
+
+At the very bottom of the window you will see a status bar. The only thing on it is the last save time. Sorry, but that's all Steve could do.
+
+
+WHAT IS .DME?
+------------------------------------------------------------------------------
+
+After so much fun we had making up the .dmw file extenstion, we went ahead and made up another one: .dme. It stands for Discount Microsoft Excel™ File. This file format is currently the only way to save work within the program and may not work in any other program so don't use this program for anything important please (unless you plan to keep it forever or are a computer nerd). We are not responsible for lost data and we will laugh at you if you email to complain.
+
+    
+CONCLUSION
+------------------------------------------------------------------------------
+
+Thank you for choosing Discount Microsoft Excel™. It certianly was a labour of love. Steve is taking an indefinete vacation,  so, we need a new programmer; mail applications to humanResources@somedudeinhismomsbasementprogramming.com or call 800-420-6969. No medical, no holidays and no retirement plan, but we are pleased to annouce that we now have excellent dental. We don't really care what your education or job experience is, as long as you know how turn on a computer. We cannot accept trained monkeys as employees.
