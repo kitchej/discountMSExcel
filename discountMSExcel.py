@@ -135,6 +135,7 @@ class CommandLine:
         self.letter_map = {'A': 0, 'B': 40, 'C': 80, 'D': 120, 'E': 160, 'F': 200, 'G': 240, 'H': 280, 'I': 320,
                            'J': 360, 'K': 400}
         self.cell_coord_pattern = re.compile(r'[A-K]\d{1,2}')
+        self.time_pattern = re.compile(r"\d{1,2}:\d{2}:?\d{2}?\s?(AM|PM|Am|Pm|pm|am)?")
         self.paddingx = 5
         self.paddingy = 0
         self.master = master
@@ -238,11 +239,9 @@ class CommandLine:
                 return 'ERROR'
         return out_value / len(in_args)
 
-    @staticmethod
-    def get_time_delta(value):
+    def get_time_delta(self, value):
         matches = ['AM', 'PM', 'am', 'pm', 'Pm', 'Am']
-        time_pattern = re.compile(r"\d{1,2}:\d{2}:?\d?\d?\s?(AM|PM|Am|Pm|pm|am)?")
-        if not re.fullmatch(time_pattern, value):
+        if not re.fullmatch(self.time_pattern, value):
             return 'ERROR'
         if any(x in value for x in matches):  # Working with 12 hour format
             value = value.split(" ")
@@ -322,6 +321,49 @@ class CommandLine:
 
         return added_time
 
+    def pay_roll(self, in_args):
+        index1 = self.get_cell_index(in_args[0])
+        index2 = self.get_cell_index(in_args[1])
+        value1 = cells[index1][0].get()
+        value2 = cells[index2][0].get()
+        if re.fullmatch(self.time_pattern, value1):
+            hours_worked = value1
+            pay_rate = value2
+        elif re.fullmatch(self.time_pattern, value2):
+            hours_worked = value2
+            pay_rate = value1
+        else:
+            return 'ERROR'
+
+        if re.fullmatch(self.time_pattern, pay_rate):
+            return 'ERROR'
+
+        try:
+            pay_rate = float(pay_rate)
+        except ValueError:
+            return 'ERROR'
+
+        hours_worked = hours_worked.split(":")
+        hours = int(hours_worked[0])
+        try:
+            minutes = int(hours_worked[1])
+        except IndexError:
+            minutes = 0
+        except ValueError:
+            return 'ERROR'
+        try:
+            seconds = int(hours_worked[2])
+        except IndexError:
+            seconds = 0
+        except ValueError:
+            return 'ERROR'
+
+        seconds = seconds / 3600
+        minutes = minutes / 60
+        total_time = hours + minutes + seconds
+
+        return round((pay_rate * total_time), 2)
+
     def parse_equation(self, in_equation, *args):
         equations = {
             'ADD': self.add,
@@ -330,7 +372,8 @@ class CommandLine:
             'DIV': self.divide,
             'AVRG': self.average,
             'TIMEDIFF': self.time_diff,
-            'TIMEADD': self.time_add
+            'TIMEADD': self.time_add,
+            'PAYROLL': self.pay_roll
         }
 
         in_equation = in_equation.split('(')
