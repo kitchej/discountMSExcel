@@ -1,4 +1,4 @@
-tfrom tkinter import *
+from tkinter import *
 import tkinter.ttk as ttk
 from tkinter import colorchooser
 from tkinter import filedialog
@@ -165,54 +165,75 @@ class CommandLine:
                 index = int(self.letter_map.get(letter)) + (int(number) - 1)
         return index
 
-    @staticmethod
-    def add(in_args):
+    def add(self, in_args, *args):
         out_value = 0
         for arg in in_args:
+            if re.fullmatch(self.cell_coord_pattern, arg):
+                index = self.get_cell_index(arg)
+                value = cells[index][0].get()
+            else:
+                value = arg
             try:
-                out_value = out_value + int(cells[arg][0].get())
+                out_value = out_value + float(value)
             except ValueError:
                 return 'ERROR'
         return out_value
 
-    @staticmethod
-    def subtract(in_args):
+    def subtract(self, in_args, *args):
         out_value = 0
         for arg in in_args:
+            if re.fullmatch(self.cell_coord_pattern, arg):
+                index = self.get_cell_index(arg)
+                value = cells[index][0].get()
+            else:
+                value = arg
             try:
-                out_value = out_value - int(cells[arg][0].get())
+                out_value = out_value - float(value)
             except ValueError:
                 return 'ERROR'
         return out_value
 
-    @staticmethod
-    def divide(in_args):
+    def divide(self, in_args, *args):
         out_value = 0
         for arg in in_args:
+            if re.fullmatch(self.cell_coord_pattern, arg):
+                index = self.get_cell_index(arg)
+                value = cells[index][0].get()
+            else:
+                value = arg
             try:
-                out_value = out_value / int(cells[arg][0].get())
+                out_value = out_value / float(value)
             except ValueError:
                 return 'ERROR'
             except ZeroDivisionError:
                 return 'ERROR'
+
         return out_value
 
-    @staticmethod
-    def multiply(in_args):
+    def multiply(self, in_args, *args):
         out_value = 0
         for arg in in_args:
+            if re.fullmatch(self.cell_coord_pattern, arg):
+                index = self.get_cell_index(arg)
+                value = cells[index][0].get()
+            else:
+                value = arg
             try:
-                out_value = out_value * int(cells[arg][0].get())
+                out_value = out_value * float(value)
             except ValueError:
                 return 'ERROR'
         return out_value
 
-    @staticmethod
-    def average(in_args):
+    def average(self, in_args, *args):
         out_value = 0
         for arg in in_args:
+            if re.fullmatch(self.cell_coord_pattern, arg):
+                index = self.get_cell_index(arg)
+                value = cells[index][0].get()
+            else:
+                value = arg
             try:
-                out_value = out_value + int(cells[arg][0].get())
+                out_value = out_value + int(value)
             except ValueError:
                 return 'ERROR'
         return out_value / len(in_args)
@@ -220,7 +241,8 @@ class CommandLine:
     @staticmethod
     def get_time_delta(value):
         matches = ['AM', 'PM', 'am', 'pm', 'Pm', 'Am']
-        if ':' not in value:
+        time_pattern = re.compile(r"\d{1,2}:\d{2}:?\d?\d?\s?(AM|PM|Am|Pm|pm|am)?")
+        if not re.fullmatch(time_pattern, value):
             return 'ERROR'
         if any(x in value for x in matches):  # Working with 12 hour format
             value = value.split(" ")
@@ -230,10 +252,14 @@ class CommandLine:
                 minutes = int(time[1])
             except IndexError:
                 minutes = 0
+            except ValueError:
+                return 'ERROR'
             try:
                 seconds = int(time[2])
             except IndexError:
                 seconds = 0
+            except ValueError:
+                return 'ERROR'
 
             if value[1] == 'PM':
                 if hours == 12:
@@ -246,16 +272,32 @@ class CommandLine:
         else:  # Working with 24 hour format
             time = value.split(":")
             hours = int(time[0])
-            minutes = int(time[1])
+            try:
+                minutes = int(time[1])
+            except IndexError:
+                minutes = 0
+            except ValueError:
+                return 'ERROR'
             try:
                 seconds = int(time[2])
             except IndexError:
                 seconds = 0
+            except ValueError:
+                return 'ERROR'
         return timedelta(hours=hours, minutes=minutes, seconds=seconds)
 
-    def time_diff(self, in_args):
-        value1 = cells[in_args[0]][0].get()
-        value2 = cells[in_args[1]][0].get()
+    def time_diff(self, in_args, *args):
+        if re.fullmatch(self.cell_coord_pattern, in_args[0]):
+            index = self.get_cell_index(in_args[0])
+            value1 = cells[index][0].get()
+        else:
+            value1 = in_args[0]
+
+        if re.fullmatch(self.cell_coord_pattern, in_args[1]):
+            index = self.get_cell_index(in_args[1])
+            value2 = cells[index][0].get()
+        else:
+            value2 = in_args[1]
 
         if self.get_time_delta(value1) == 'ERROR':
             return 'ERROR'
@@ -265,10 +307,14 @@ class CommandLine:
 
         return self.get_time_delta(value1) - self.get_time_delta(value2)
 
-    def time_add(self, in_args):
+    def time_add(self, in_args, *args):
         added_time = timedelta()
         for arg in in_args:
-            time_string = cells[arg][0].get()
+            if re.fullmatch(self.cell_coord_pattern, arg):
+                index = self.get_cell_index(arg)
+                time_string = cells[index][0].get()
+            else:
+                time_string = arg
             time_delta = self.get_time_delta(time_string)
             if time_delta == 'ERROR':
                 return "ERROR"
@@ -276,13 +322,13 @@ class CommandLine:
 
         return added_time
 
-    def parse_equation(self, in_equation):
+    def parse_equation(self, in_equation, *args):
         equations = {
             'ADD': self.add,
             'SUB': self.subtract,
             'MULTI': self.multiply,
             'DIV': self.divide,
-            'AVERAGE': self.average,
+            'AVRG': self.average,
             'TIMEDIFF': self.time_diff,
             'TIMEADD': self.time_add
         }
@@ -291,8 +337,8 @@ class CommandLine:
         operator = in_equation[0]
         args = in_equation[1].strip(')')
 
-        if len(args.split(":")) > 1:
-            args = args.split(':')
+        if len(args.split("::")) > 1:
+            args = args.split('::')
 
             start_value = int(args[0][1])  # get row number
             end_value = int(args[1][1])
@@ -308,12 +354,7 @@ class CommandLine:
         else:
             args = args.split(',')
 
-        out_args = []
-
-        for arg in args:
-            out_args.append(self.get_cell_index(arg))
-
-        answer = equations[operator](out_args)
+        answer = equations[operator](args)
 
         return answer
 
@@ -765,8 +806,8 @@ underline = Button(tool_bar_frame, image=underline_icon, command=underline_text)
 strikethrough_button = Button(tool_bar_frame, image=strike_through_icon, command=strike_through_text)
 bg_label = Label(tool_bar_frame, text="Background")
 fg_label = Label(tool_bar_frame, text="Text Color")
-bg_color_button = Button(tool_bar_frame, background='white', command=change_bg)
-fg_color_button = Button(tool_bar_frame, background='black', command=change_fg)
+bg_color_button = Button(tool_bar_frame, background='white', command=change_bg,  width=2)
+fg_color_button = Button(tool_bar_frame, background='black', command=change_fg, width=2)
 
 new_button.pack(side=LEFT, padx=paddingx, pady=paddingy)
 open_button.pack(side=LEFT, padx=paddingx, pady=paddingy)
@@ -868,7 +909,7 @@ def close():
     elif answer is None:
         return
     else:
-        root.destory()
+        root.quit()
 
 
 root.protocol('WM_DELETE_WINDOW', close)
