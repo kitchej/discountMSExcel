@@ -66,8 +66,6 @@ Background Color - Change the background color of a cell. Select a cell then fro
 EQUATIONS
 ------------------------------------------------------------------------------
 
-Steve said he is quite proud of how this feature turned out.
-
 Diagram 1: Overview of the equation bar
 Note: Not to scale
 
@@ -93,9 +91,15 @@ Ouputs:
 | 4 | 15          |
 
 
-To select a range of cells, one can use the ':' operator. Example:
+To select a range of cells, one can use the '::' operator. Example:
 
-|Insert|  |A4|  =  |ADD(A1:A3)|
+|Insert|  |A4|  =  |ADD(A1::A3)|
+
+Values can also be directly added to equations. Examples:
+
+|Insert|  |A4| = |ADD(A1,A2,34)|
+
+|Insert|  |A4| = |TIMEDIFF(A1,5:37)|
 
 
 Avalible equations:
@@ -105,7 +109,8 @@ MULTI - Multiplies selected cells
 DIV - Divides selected cells
 AVRG - Finds the average of the selected cells
 TIMEDIFF - finds the diffrence between two times
-TIMEADD - adds time values together
+TIMEADD - adds two time values together
+PAYROLL - Multiplies a pay rate with a time (must be 24-hour format)
 *Note: for operations involving time, the values MUST be formatted as a time. Args in brackets are optional:
 
 12-hour: HH:MM[:SS] PM/AM
