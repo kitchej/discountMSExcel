@@ -129,13 +129,87 @@ class File:
             last_save.set(f"Last Save: ")
 
 
+class CommandSelection:
+    def __init__(self, master, CL_obj):
+        self.master = master
+        self.CL_obj = CL_obj
+        self.command_list_frame = Frame(self.master)
+        self.equation_frame = Frame(self.master)
+        self.preview_frame = Frame(self.master)
+        self.command_list_frame.pack()
+        self.equation_frame.pack()
+        self.preview_frame.pack()
+
+        self.equation_error = StringVar()
+        self.commands = [
+            'ADD() - Finds the sum of its arguments',
+            'SUB() - Finds the difference of its arguments',
+            'MULTI() - Finds the product of its arguments',
+            'DIV() - Finds the quotient of its arguments',
+            'AVRG() - Finds the average of its arguments',
+            'TIMEDIFF() - Finds the difference of two times',
+            'TIMEADD() - Adds time values together',
+            'PAYROLL() - Takes a pay rate and multiplies it with a time value'
+        ]
+
+        self.label = Label(self.command_list_frame, text="Select equation by double-clicking")
+        self.command_list = Listbox(self.command_list_frame, selectmode=SINGLE, width=75)
+        self.label.pack()
+        self.command_list.pack()
+        for command in self.commands:
+            self.command_list.insert(END, command)
+
+        self.preview_cell = Entry(self.equation_frame, width=5)
+        self.preview_cell.insert(END, self.CL_obj.cell_entry.get())
+        self.equals = Label(self.equation_frame, text="=")
+        self.preview_equation = Entry(self.equation_frame, width=40)
+        self.preview_equation.insert(END, self.CL_obj.equation_entry.get())
+        self.select_button = Button(self.equation_frame, text="Confirm", command=self.confirm)
+        self.cancel_button = Button(self.equation_frame, text='Cancel', command=self.cancel)
+
+        self.select_button.grid(row=0, column=0, padx=5, pady=5)
+        self.preview_cell.grid(row=0, column=1, padx=5, pady=5)
+        self.equals.grid(row=0, column=2, padx=5, pady=5)
+        self.preview_equation.grid(row=0, column=4, padx=5, pady=5)
+        self.cancel_button.grid(row=0, column=5, padx=5, pady=5)
+
+        self.answer_label = Label(self.preview_frame, text='Answer: ', padx=5, pady=5)
+        self.equation_answer_preview = Label(self.preview_frame, textvariable=self.equation_error, padx=5, pady=5)
+        self.answer_label.pack(side=LEFT)
+        self.equation_answer_preview.pack(side=LEFT)
+
+        self.master.bind('<Key>', self.test_equation)
+        self.command_list.bind('<Double-Button-1>', self.get_selection)
+
+    def get_selection(self, *args):
+        command = self.command_list.get(self.command_list.curselection())
+        command = command.split(" ")[0]
+        self.preview_equation.delete(0, END)
+        self.preview_equation.insert(END, command)
+
+    def cancel(self):
+        self.master.destroy()
+
+    def confirm(self):
+        self.CL_obj.equation_entry.delete(0, END)
+        self.CL_obj.cell_entry.delete(0, END)
+        self.CL_obj.equation_entry.insert(END, self.preview_equation.get())
+        self.CL_obj.cell_entry.insert(END, self.preview_cell.get())
+        self.CL_obj.insert()
+        self.master.destroy()
+
+    def test_equation(self, *args):
+        equation = self.preview_equation.get()
+        ans = self.CL_obj.parse_equation(equation)
+        self.equation_error.set(ans)
+
+
 class CommandLine:
     def __init__(self, master):
         # dict that converts column letters into an index for the 'cells' list
         self.letter_map = {'A': 0, 'B': 40, 'C': 80, 'D': 120, 'E': 160, 'F': 200, 'G': 240, 'H': 280, 'I': 320,
                            'J': 360, 'K': 400}
         self.cell_coord_pattern = re.compile(r'[A-K]\d{1,2}')
-        self.time_pattern = re.compile(r"\d{1,2}:\d{2}:?\d{2}?\s?(AM|PM|Am|Pm|pm|am)?")
         self.paddingx = 5
         self.paddingy = 0
         self.master = master
@@ -145,13 +219,20 @@ class CommandLine:
         self.equation_entry = Entry(self.master, width=40)
         self.cell_entry_label = Label(self.master, text="Cell")
         self.equation_entry_label = Label(self.master, text="Equation")
+        self.equation_select_button = Button(self.master, text="⨍(x)", command=self.open_equation_wizard)
 
         self.cell_entry_label.grid(row=0, column=1, padx=self.paddingx, pady=self.paddingy)
-        self.equation_entry_label.grid(row=0, column=3, padx=self.paddingx, pady=self.paddingy)
+        self.equation_entry_label.grid(row=0, column=4, padx=self.paddingx, pady=self.paddingy)
         self.insert_button.grid(row=1, column=0, padx=self.paddingx, pady=self.paddingy)
         self.cell_entry.grid(row=1, column=1, padx=self.paddingx, pady=self.paddingy)
         self.equal_sign.grid(row=1, column=2, padx=self.paddingx, pady=self.paddingy)
-        self.equation_entry.grid(row=1, column=3, padx=self.paddingx, pady=self.paddingy)
+        self.equation_select_button.grid(row=1, column=3, padx=self.paddingx, pady=self.paddingy)
+        self.equation_entry.grid(row=1, column=4, padx=self.paddingx, pady=self.paddingy)
+
+    def open_equation_wizard(self):
+        win = Toplevel()
+        win.title("Function Wizard")
+        c = CommandSelection(win, self)
 
     def get_cell_index(self, cell_coord):
         index = None
@@ -239,14 +320,16 @@ class CommandLine:
                 return 'ERROR'
         return out_value / len(in_args)
 
-    def get_time_delta(self, value):
+    @staticmethod
+    def get_time_delta(value):
         matches = ['AM', 'PM', 'am', 'pm', 'Pm', 'Am']
-        if not re.fullmatch(self.time_pattern, value):
-            return 'ERROR'
         if any(x in value for x in matches):  # Working with 12 hour format
             value = value.split(" ")
             time = value[0].split(":")
-            hours = int(time[0])
+            try:
+                hours = int(time[0])
+            except ValueError:
+                return 'ERROR'
             try:
                 minutes = int(time[1])
             except IndexError:
@@ -270,7 +353,10 @@ class CommandLine:
                     hours += 12
         else:  # Working with 24 hour format
             time = value.split(":")
-            hours = int(time[0])
+            try:
+                hours = int(time[0])
+            except ValueError:
+                return 'ERROR'
             try:
                 minutes = int(time[1])
             except IndexError:
@@ -322,20 +408,27 @@ class CommandLine:
         return added_time
 
     def pay_roll(self, in_args):
-        index1 = self.get_cell_index(in_args[0])
-        index2 = self.get_cell_index(in_args[1])
+        if re.fullmatch(self.cell_coord_pattern, in_args[0]):
+            index1 = self.get_cell_index(in_args[0])
+        else:
+            return 'ERROR'
+        if re.fullmatch(self.cell_coord_pattern, in_args[1]):
+            index2 = self.get_cell_index(in_args[1])
+        else:
+            return 'ERROR'
+
         value1 = cells[index1][0].get()
         value2 = cells[index2][0].get()
-        if re.fullmatch(self.time_pattern, value1):
+        if ':' in value1:
             hours_worked = value1
             pay_rate = value2
-        elif re.fullmatch(self.time_pattern, value2):
+        elif ':' in value2:
             hours_worked = value2
             pay_rate = value1
         else:
             return 'ERROR'
 
-        if re.fullmatch(self.time_pattern, pay_rate):
+        if ':' in pay_rate:
             return 'ERROR'
 
         try:
@@ -343,8 +436,12 @@ class CommandLine:
         except ValueError:
             return 'ERROR'
 
-        hours_worked = hours_worked.split(":")
-        hours = int(hours_worked[0])
+        try:
+            hours_worked = hours_worked.split(':')
+            hours = int(hours_worked[0])
+        except ValueError:
+            return 'ERROR'
+
         try:
             minutes = int(hours_worked[1])
         except IndexError:
