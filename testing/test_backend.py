@@ -1,4 +1,4 @@
-import equations as equ
+import backend.equations as equ
 from decimal import Decimal
 
 

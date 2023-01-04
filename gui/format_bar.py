@@ -23,10 +23,10 @@ class FormatBar(ttk.Frame):
         self.strike_btn = ttk.Button(self, image=self.strike_image, style='TButton')
 
         self.background_lab = ttk.Label(self, text="Background:")
-        self.background_btn = tk.Button(self, background='white', width=2)
+        self.background_btn = tk.Button(self, background='white', width=2, activebackground='white')
 
         self.foreground_lab = ttk.Label(self, text="Foreground:")
-        self.foreground_btn = tk.Button(self, background='black', width=2)
+        self.foreground_btn = tk.Button(self, background='black', width=2, activebackground='black')
 
         self.font_combo = ttk.Combobox(self,
                                        state='readonly',

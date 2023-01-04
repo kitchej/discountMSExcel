@@ -2,7 +2,7 @@ import tkinter.ttk as ttk
 import tkinter as tk
 import os
 
-import equations as equ
+import backend.equations as equ
 
 class EquInput(ttk.Frame):
     def __init__(self, parent):
@@ -13,7 +13,7 @@ class EquInput(ttk.Frame):
         self.cell_entry.insert(0, 'A1')
         self.equal_lab = ttk.Label(self, text="=")
         self.function_btn = ttk.Button(self, text="𝑓(𝑥)")
-        self.equ_entry = ttk.Entry(self, exportselection=0, width=200)
+        self.equ_entry = ttk.Entry(self, exportselection=0, width=100)
 
         self.insert_btn.grid(row=0, column=0, padx=self.parent.padx, pady=self.parent.pady)
         self.cell_entry.grid(row=0, column=1, padx=self.parent.padx, pady=self.parent.pady)

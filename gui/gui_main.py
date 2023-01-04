@@ -27,7 +27,7 @@ class MainWindow(tk.Tk):
         tk.Tk.__init__(self)
         self.style = Style()
         self.title("Discount MS Excel")
-        self.geometry('1500x950')
+        self.geometry('1550x950')
         self.iconphoto = tk.PhotoImage(False, file=os.path.join('gui', 'icons', 'main_icon.png'))
 
         self.padx = 2

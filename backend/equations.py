@@ -112,7 +112,7 @@ def average(values_list):
 
 def now(_format):
     out = datetime.now().strftime(_format)
-    if out == '':
+    if out == '' or "%" in out:
         return 'ERROR'
     else:
         return out
