@@ -20,4 +20,4 @@
 
 *.pyc
 
-
+/testing/.pytest_cache/
