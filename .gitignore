@@ -11,10 +11,13 @@
 
 # Built Visual Studio Code Extensions
 *.vsix
+*.json
 
 # ignore .idea
 *.lml
 *.xml
 *.patch
+
+*.pyc
 
 
