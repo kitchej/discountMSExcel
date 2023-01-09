@@ -19,7 +19,10 @@ class Style:
         self.btn_style.configure("TButton", margin=1)
 
         self.test = ttk.Style()
-        self.test.configure("new.TFrame", background="blue")
+        self.test.configure("new.TLabel", background="blue", foregorund='White', borderwidth=12)
+
+        self.cell = ttk.Style()
+        self.cell.configure("default.TEntry", borderwidth=2)
 
 
 class MainWindow(tk.Tk):
@@ -27,7 +30,7 @@ class MainWindow(tk.Tk):
         tk.Tk.__init__(self)
         self.style = Style()
         self.title("Discount MS Excel")
-        self.geometry('1550x950')
+        self.geometry('1400x950')
         self.iconphoto = tk.PhotoImage(False, file=os.path.join('gui', 'icons', 'main_icon.png'))
 
         self.padx = 2
