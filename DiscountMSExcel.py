@@ -3,6 +3,7 @@ import os
 from gui.gui_main import MainWindow
 
 
+
 def main():
     if len(sys.argv) > 1:
         if os.path.exists(sys.argv[1]) and not os.path.isdir(sys.argv[1]):
