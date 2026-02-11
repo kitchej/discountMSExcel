@@ -5,8 +5,8 @@ import os
 import backend.equations as equ
 
 class EquInput(ttk.Frame):
-    def __init__(self, parent):
-        ttk.Frame.__init__(self)
+    def __init__(self, parent, *args, **kwargs):
+        ttk.Frame.__init__(self, *args, **kwargs)
         self.parent = parent
         self.insert_btn = ttk.Button(self, text="Insert")
         self.cell_entry = ttk.Entry(self, exportselection=0, width=3)

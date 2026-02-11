@@ -523,7 +523,7 @@ class Features:
         self.scrollbar.pack(side=RIGHT, fill=Y)
         self.scrollbar.configure(command=self.text.yview)
         try:
-            with open('README', 'r') as readme_file:
+            with open('README', 'r', encoding="utf-8") as readme_file:
                 self.readme_text = readme_file.read()
         except FileNotFoundError:
             self.readme_text = "Your readme file was deleted. Guess you'll never know how this program works."

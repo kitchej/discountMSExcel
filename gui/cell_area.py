@@ -1,13 +1,15 @@
 import tkinter.ttk as ttk
 import tkinter as tk
-import os
+
+COLUMN_COUNT = 40
+
 
 class Cell(ttk.Entry):
     def __init__(self, formatting, parent):
         ttk.Entry.__init__(self)
         self.parent = parent
         self.formatting = formatting
-        parse_formatting()
+        self.parse_formatting()
 
     def parse_formatting(self):
         for setting in self.formatting:
@@ -15,20 +17,24 @@ class Cell(ttk.Entry):
 
 
 class CellArea(ttk.Frame):
-    def __init__(self, parent):
-        ttk.Frame.__init__(self)
+    def __init__(self, parent, *args, **kwargs):
+        ttk.Frame.__init__(self, *args, **kwargs)
         self.parent = parent
         self.labels_columns = 'ABCDEFGHIJK'
         self.cells_dict = {}
         self.cells = []
+        # self.y_scroll = tk.Scrollbar(self)
+        # self.y_scroll.grid(column=COLUMN_COUNT + 1, anchor=tk.RIGHT)
+        # self.y_scroll.configure(command=self.y_view)
+        self.configure()
 
         for i, label in enumerate(self.labels_columns):
             column_label = ttk.Label(self, text=label)
             column_label.grid(row=0, column=i + 1)
-            for j in range(40):
+            for j in range(COLUMN_COUNT):
                 row_label = ttk.Label(self, text=f"{j + 1}")
                 row_label.grid(row=j + 1, column=0, padx=1)
-                cell = ttk.Entry(self, style="default.TEntry")
+                cell = tk.Entry(self, relief=tk.FLAT, borderwidth=5, border=2, highlightthickness=1)
                 self.cells.append([cell,
                                    [
                                        cell.get(),
@@ -39,3 +45,19 @@ class CellArea(ttk.Frame):
                                    ])
                 self.cells_dict.update({f"{label}{j + 1}": cell})
                 cell.grid(row=j + 1, column=i + 1)
+
+    def get_cell_content(self, cell):
+        """
+
+        :param cell: cell index [row][column] ex: A5
+        :return: contents of the cell
+        """
+        pass
+
+    def get_cell_formating(self, cell):
+        """
+
+        :param cell: cell index [row][column] ex: A5
+        :return: dictionary with keys
+        """
+

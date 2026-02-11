@@ -3,8 +3,8 @@ import tkinter as tk
 import os
 
 class FormatBar(ttk.Frame):
-    def __init__(self, parent):
-        ttk.Frame.__init__(self)
+    def __init__(self, parent, *args, **kwargs):
+        ttk.Frame.__init__(self, *args, **kwargs)
         self.parent = parent
 
         self.font_paddingx = 4
