@@ -44,7 +44,7 @@ class MainWindow(tk.Tk):
         self.main_menu.add_cascade(menu=self.file_menu, label='File')
         self.main_menu.add_cascade(menu=self.edit_menu, label='Edit')
         self.main_menu.add_cascade(menu=self.format_menu, label='Format')
-        self.main_menu.add_cascade(menu=self.format_menu, label='Help')
+        self.main_menu.add_cascade(menu=self.help_menu, label='Help')
         self.configure(menu=self.main_menu)
 
         self.canvas_frame = tk.Frame(self)
@@ -56,7 +56,7 @@ class MainWindow(tk.Tk):
         self.format_bar.pack(side=tk.TOP, anchor=tk.W)
         self.equ_bar.pack(side=tk.BOTTOM, anchor=tk.W)
 
-        self.cell_canvas = tk.Canvas(master=self.canvas_frame)
+        self.cell_canvas = tk.Canvas(master=self.canvas_frame, relief=tk.FLAT, highlightthickness=0)
         self.cell_area = CellArea(self, master=self.cell_canvas)
         self.cell_canvas.create_window((0, 0), window=self.cell_area, anchor=tk.NW)
         self.scrollbar_v = tk.Scrollbar(self.canvas_frame, orient=tk.VERTICAL, command=self.cell_canvas.yview)
@@ -74,8 +74,6 @@ class MainWindow(tk.Tk):
 
         self.toolbar_frame.pack(side=tk.TOP, anchor=tk.W, padx=5, pady=5)
         self.canvas_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-
-
 
         self.cell_area.bind('<Configure>', self._on_cell_area_configure)
 
