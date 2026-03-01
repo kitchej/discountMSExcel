@@ -1,117 +1,128 @@
 from datetime import datetime
-from decimal import Decimal, InvalidOperation
+import decimal
 import math
 
 
-def _sum(values_list):
-    if len(values_list) <= 1:
+def get_sum(args):
+    if len(args) == 0:
         return 'ERROR'
     try:
-        values_list = [Decimal(i) for i in values_list]
-    except InvalidOperation:
+        args = [decimal.Decimal(i) for i in args]
+    except decimal.InvalidOperation:
         return 'ERROR'
-    return sum(values_list)
+    return sum(args)
 
 
-def difference(values_list):
-    if len(values_list) <= 1:
+def get_difference(args):
+    if len(args) == 0:
         return 'ERROR'
     try:
-        out = Decimal(values_list[0])
-    except InvalidOperation:
+        out = decimal.Decimal(args[0])
+    except decimal.InvalidOperation:
         return 'ERROR'
-    for value in values_list[1:len(values_list)]:
+    for value in args[1:len(args)]:
         try:
-            value = Decimal(value)
-        except InvalidOperation:
+            value = decimal.Decimal(value)
+        except decimal.InvalidOperation:
             return 'ERROR'
         out -= value
     return out
 
 
-def product(values_list):
-    if len(values_list) <= 1:
+def get_product(args):
+    if len(args) == 0:
         return 'ERROR'
     out = 1
-    for value in values_list:
+    for value in args:
         try:
-            value = Decimal(value)
-        except InvalidOperation:
+            value = decimal.Decimal(value)
+        except decimal.InvalidOperation:
             return 'ERROR'
         out *= value
     return out
 
 
-def quotient(values_list):
-    if len(values_list) <= 1:
+def get_quotient(args):
+    if len(args) == 0:
         return 'ERROR'
     try:
-        lhs = Decimal(values_list[0])
-        rhs = Decimal(values_list[1])
-    except InvalidOperation:
+        lhs = decimal.Decimal(args[0])
+        rhs = decimal.Decimal(args[1])
+    except decimal.InvalidOperation:
         return 'ERROR'
 
     out = lhs / rhs
-    for value in values_list[2:len(values_list)]:
+    for value in args[2:len(args)]:
         try:
-            value = Decimal(value)
-        except InvalidOperation:
+            value = decimal.Decimal(value)
+        except decimal.InvalidOperation:
             return 'ERROR'
         out /= value
     return out
 
 
-def floor(value: str):
-    try:
-        value = Decimal(value)
-    except InvalidOperation:
-        return 'ERROR'
-    return math.floor(value)
-
-
-def ceiling(value: str):
-    try:
-        value = Decimal(value)
-    except InvalidOperation:
-        return 'ERROR'
-    return math.ceil(value)
-
-
-def trunc(value: str):
-    try:
-        value = Decimal(value)
-    except InvalidOperation:
-        return 'ERROR'
-    return math.trunc(value)
-
-
-def _round(value: str, precision: str):
-    if isinstance(precision, float) or '.' in precision:
+def get_floor(args):
+    if len(args) != 1:
         return 'ERROR'
     try:
-        precision = int(precision)
+        value = decimal.Decimal(args[0])
+    except decimal.InvalidOperation:
+        return 'ERROR'
+    decimal.getcontext().rounding = decimal.ROUND_FLOOR
+    return round(value, 0)
+
+
+def get_ceiling(args):
+    if len(args) != 1:
+        return 'ERROR'
+    try:
+        value = decimal.Decimal(args[0])
+    except decimal.InvalidOperation:
+        return 'ERROR'
+    decimal.getcontext().rounding = decimal.ROUND_CEILING
+    return round(value, 0)
+
+
+def get_trunc(args):
+    if len(args) != 1:
+        return 'ERROR'
+    try:
+        value = int(args[0])
+    except decimal.InvalidOperation:
+        return 'ERROR'
+    return value
+
+
+def get_round(args):
+    if len(args) != 2:
+        return 'ERROR'
+    try:
+        value = decimal.Decimal(args[0])
+    except decimal.InvalidOperation:
+        return 'ERROR'
+    try:
+        precision = int(args[1])
     except ValueError:
         return 'ERROR'
-    try:
-        value = Decimal(value)
-    except InvalidOperation:
-        return 'ERROR'
+    decimal.getcontext().rounding = decimal.ROUND_HALF_EVEN
     return round(value, precision)
 
 
-def average(values_list):
-    if len(values_list) == 0:
+def get_average(args):
+    if len(args) == 0:
         return 'ERROR'
     else:
         try:
-            values_list = [Decimal(i) for i in values_list]
-        except InvalidOperation:
+            args = [decimal.Decimal(i) for i in args]
+        except decimal.InvalidOperation:
             return 'ERROR'
-        return Decimal(sum(values_list)) / Decimal(len(values_list))
+        return decimal.Decimal(sum(args)) / decimal.Decimal(len(args))
 
 
-def now(_format):
-    out = datetime.now().strftime(_format)
+def get_current_date(args):
+    if len(args) != 1:
+        return 'ERROR'
+    out = datetime.now().strftime(args[0])
     if out == '' or "%" in out:
         return 'ERROR'
     else:
@@ -120,4 +131,4 @@ def now(_format):
 
 
 if __name__ == '__main__':
-    print(quotient(['10', '20', '30', '40']))
+    print(get_quotient(['10', '20', '30', '40']))

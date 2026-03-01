@@ -2,13 +2,14 @@ import tkinter.ttk as ttk
 import tkinter as tk
 import os
 
+
 from gui.file_menu import FileMenu
 from gui.edit_menu import EditMenu
 from gui.format_menu import FormatMenu
 from gui.help_menu import HelpMenu
 from gui.format_bar import FormatBar
 from gui.equ_input import EquInput
-from gui.cell_area import CellArea
+from gui.cell_area import CellArea, Cell
 from gui.status_bar import StatusBar
 
 
@@ -75,12 +76,16 @@ class MainWindow(tk.Tk):
         self.toolbar_frame.pack(side=tk.TOP, anchor=tk.W, padx=5, pady=5)
         self.canvas_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        self.cell_area.bind('<Configure>', self._on_cell_area_configure)
+        self.cell_area.bind('<Configure>', self.on_cell_area_configure)
+        self.bind('<Button-1>', self.update_cells)
 
-
-    def _on_cell_area_configure(self, event):
+    def on_cell_area_configure(self, event):
         """Update scroll region when cell area size changes"""
         self.cell_canvas.configure(scrollregion=self.cell_canvas.bbox("all"))
 
-
-
+    def update_cells(self, event):
+        # Update equation entry with current cell
+        cell = self.focus_get()
+        if isinstance(cell, Cell):
+            self.equ_bar.set_current_cell(cell.id)
+            self.equ_bar.set_equ(cell.equ)

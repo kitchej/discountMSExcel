@@ -28,18 +28,6 @@ class FormatBar(ttk.Frame):
         self.foreground_lab = ttk.Label(self, text="Foreground:")
         self.foreground_btn = tk.Button(self, background='black', width=2, activebackground='black')
 
-        self.font_combo = ttk.Combobox(self,
-                                       state='readonly',
-                                       values=("Arial", "Helvetica", "Times"),
-                                       exportselection=0)
-        self.font_combo.set("Arial")
-        self.font_size_combo = ttk.Combobox(self,
-                                            state='readonly',
-                                            values=("10", '11', '12', '14', '16', '20', '24'),
-                                            exportselection=0)
-
-        self.font_size_combo.set("11")
-
         self.format_lab = ttk.Label(self, text="Number Format: ")
         self.format_combo = ttk.Combobox(self,
                                          state="readonly",
@@ -55,8 +43,5 @@ class FormatBar(ttk.Frame):
         self.background_btn.grid(row=0, column=5, padx=self.parent.padx, pady=self.parent.pady)
         self.foreground_lab.grid(row=0, column=6, padx=self.parent.padx, pady=self.parent.pady)
         self.foreground_btn.grid(row=0, column=7, padx=self.parent.padx, pady=self.parent.pady)
-        self.font_combo.grid(row=0, column=8, padx=self.font_paddingx, pady=self.parent.pady)
-        self.font_size_combo.grid(row=0, column=9, padx=self.font_paddingx, pady=self.parent.pady)
         self.format_lab.grid(row=0, column=10, padx=self.format_paddingx, pady=self.parent.pady)
         self.format_combo.grid(row=0, column=11, padx=self.parent.padx, pady=self.parent.pady)
-
