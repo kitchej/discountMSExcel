@@ -1,6 +1,7 @@
 import tkinter.ttk as ttk
 import tkinter as tk
 import os
+from datetime import datetime
 
 
 from gui.file_menu import FileMenu
@@ -71,13 +72,16 @@ class MainWindow(tk.Tk):
         self.scrollbar_h.pack(side=tk.BOTTOM, fill=tk.X)
 
         self.status_bar = StatusBar(self.status_frame)
-        self.status_bar.pack()
+        self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
         self.toolbar_frame.pack(side=tk.TOP, anchor=tk.W, padx=5, pady=5)
         self.canvas_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         self.cell_area.bind('<Configure>', self.on_cell_area_configure)
         self.bind('<Button-1>', self.update_cells)
+
+    def set_last_save(self, clear_time=False):
+        self.status_bar.set_last_save(f"Last Save: {datetime.now().strftime('%I:%M %p')}")
 
     def on_cell_area_configure(self, event):
         """Update scroll region when cell area size changes"""
