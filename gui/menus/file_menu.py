@@ -1,7 +1,6 @@
 import pickle
 from tkinter import filedialog, messagebox
 import tkinter as tk
-from datetime import datetime
 
 
 class FileMenu(tk.Menu):

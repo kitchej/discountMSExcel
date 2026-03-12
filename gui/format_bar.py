@@ -1,6 +1,8 @@
 import tkinter.ttk as ttk
 import tkinter as tk
 import os
+from tkinter import colorchooser
+
 
 class FormatBar(ttk.Frame):
     def __init__(self, parent, *args, **kwargs):
@@ -11,22 +13,22 @@ class FormatBar(ttk.Frame):
         self.format_paddingx = 4
 
         self.bold_image = tk.PhotoImage(file=os.path.join('gui', 'icons', 'bold_icon.png'))
-        self.bold_btn = ttk.Button(self, image=self.bold_image, style='TButton')
+        self.bold_btn = ttk.Button(self, image=self.bold_image, style='TButton', command=self.toggle_bold)
 
         self.italics_image = tk.PhotoImage(file=os.path.join('gui', 'icons', 'italics_icon.png'))
-        self.italics_btn = ttk.Button(self, image=self.italics_image, style='TButton')
+        self.italics_btn = ttk.Button(self, image=self.italics_image, style='TButton', command=self.toggle_italics)
 
         self.underline_image = tk.PhotoImage(file=os.path.join('gui', 'icons', 'underline_icon.png'))
-        self.underline_btn = ttk.Button(self, image=self.underline_image, style='TButton')
+        self.underline_btn = ttk.Button(self, image=self.underline_image, style='TButton', command=self.toggle_underline)
 
         self.strike_image = tk.PhotoImage(file=os.path.join('gui', 'icons', 'strikethrough_icon.png'))
-        self.strike_btn = ttk.Button(self, image=self.strike_image, style='TButton')
+        self.strike_btn = ttk.Button(self, image=self.strike_image, style='TButton', command=self.toggle_strikethrough)
 
         self.background_lab = ttk.Label(self, text="Background:")
-        self.background_btn = tk.Button(self, background='white', width=2, activebackground='white')
+        self.background_btn = tk.Button(self, background='white', width=2, activebackground='white', command=self.set_bg)
 
         self.foreground_lab = ttk.Label(self, text="Foreground:")
-        self.foreground_btn = tk.Button(self, background='black', width=2, activebackground='black')
+        self.foreground_btn = tk.Button(self, background='black', width=2, activebackground='black', command=self.set_fg)
 
         self.format_lab = ttk.Label(self, text="Number Format: ")
         self.format_combo = ttk.Combobox(self,
@@ -45,3 +47,31 @@ class FormatBar(ttk.Frame):
         self.foreground_btn.grid(row=0, column=7, padx=self.parent.padx, pady=self.parent.pady)
         self.format_lab.grid(row=0, column=10, padx=self.format_paddingx, pady=self.parent.pady)
         self.format_combo.grid(row=0, column=11, padx=self.parent.padx, pady=self.parent.pady)
+
+    def set_fg_button_color(self, color):
+        self.foreground_btn.configure(bg=color)
+
+    def set_bg_button_color(self, color):
+        self.background_btn.configure(bg=color)
+
+    def toggle_bold(self):
+        self.parent.current_cell.toggle_bold()
+
+    def toggle_italics(self):
+        self.parent.current_cell.toggle_italics()
+
+    def toggle_underline(self):
+        self.parent.current_cell.toggle_underline()
+
+    def toggle_strikethrough(self):
+        self.parent.current_cell.toggle_strikethrough()
+
+    def set_bg(self):
+        color = colorchooser.askcolor()
+        self.parent.current_cell.set_bg(color[1])
+        self.set_bg_button_color(color[1])
+
+    def set_fg(self):
+        color = colorchooser.askcolor()
+        self.parent.current_cell.set_fg(color[1])
+        self.set_fg_button_color(color[1])

@@ -74,6 +74,12 @@ class Cell(tk.Entry):
         self.configure(foreground=color)
         self.formatting["fg"] = color
 
+    def get_fg(self):
+        return self.formatting["fg"]
+
+    def get_bg(self):
+        return self.formatting["bg"]
+
     def toggle_bold(self):
         if self.font.cget('weight') == 'normal':
             self.font.configure(weight='bold')
@@ -105,7 +111,7 @@ class Cell(tk.Entry):
 
 
     def toggle_strikethrough(self):
-        if self.font.cget('strikethrough') == 0:
+        if self.font.cget('overstrike') == 0:
             self.font.configure(overstrike=1)
             self.formatting["font"]["strikethrough"] = 1
         else:

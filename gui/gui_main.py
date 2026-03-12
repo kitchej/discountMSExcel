@@ -98,3 +98,5 @@ class MainWindow(tk.Tk):
             self.equ_bar.set_current_cell(cell.id)
             self.equ_bar.set_equ(cell.equ)
             self.current_cell = cell
+            self.format_bar.set_fg_button_color(self.current_cell.get_fg())
+            self.format_bar.set_bg_button_color(self.current_cell.get_bg())
