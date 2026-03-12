@@ -1,5 +1,6 @@
 import tkinter.ttk as ttk
 import tkinter as tk
+from tkinter import colorchooser
 
 class FormatMenu(tk.Menu):
     def __init__(self, parent):
@@ -13,20 +14,22 @@ class FormatMenu(tk.Menu):
         self.add_command(label="Background Color", command=self.change_bg)
 
     def bold_text(self):
-        pass
+        self.parent.current_cell.toggle_bold()
 
     def underline_text(self):
-        pass
+        self.parent.current_cell.toggle_underline()
 
     def italics_text(self):
-        pass
+        self.parent.current_cell.toggle_italics()
 
     def strike_through_text(self):
-        pass
+        self.parent.current_cell.toggle_strikethrough()
 
     def change_fg(self):
-        pass
+        color = colorchooser.askcolor()
+        self.parent.current_cell.configure(foreground=color[1])
 
     def change_bg(self):
-        pass
+        color = colorchooser.askcolor()
+        self.parent.current_cell.configure(background=color[1])
 

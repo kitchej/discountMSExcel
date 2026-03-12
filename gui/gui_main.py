@@ -4,10 +4,10 @@ import os
 from datetime import datetime
 
 
-from gui.file_menu import FileMenu
-from gui.edit_menu import EditMenu
-from gui.format_menu import FormatMenu
-from gui.help_menu import HelpMenu
+from gui.menus.file_menu import FileMenu
+from gui.menus.edit_menu import EditMenu
+from gui.menus.format_menu import FormatMenu
+from gui.menus.help_menu import HelpMenu
 from gui.format_bar import FormatBar
 from gui.equ_input import EquInput
 from gui.cell_area import CellArea, Cell
@@ -37,6 +37,7 @@ class MainWindow(tk.Tk):
         self.title("Discount MS Excel")
         self.geometry('1400x950')
         self.iconphoto = tk.PhotoImage(False, file=os.path.join('gui', 'icons', 'main_icon.png'))
+        self.current_cell = None
 
         self.main_menu = tk.Menu(self)
         self.file_menu = FileMenu(self)
@@ -80,6 +81,9 @@ class MainWindow(tk.Tk):
         self.cell_area.bind('<Configure>', self.on_cell_area_configure)
         self.bind('<Button-1>', self.update_cells)
 
+        if in_file is not None:
+            self.file_menu.open(in_file)
+
     def set_last_save(self, clear_time=False):
         self.status_bar.set_last_save(f"Last Save: {datetime.now().strftime('%I:%M %p')}")
 
@@ -93,3 +97,4 @@ class MainWindow(tk.Tk):
         if isinstance(cell, Cell):
             self.equ_bar.set_current_cell(cell.id)
             self.equ_bar.set_equ(cell.equ)
+            self.current_cell = cell

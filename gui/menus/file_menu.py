@@ -48,11 +48,14 @@ class FileMenu(tk.Menu):
             return
         self.save()
 
-    def open(self):
+    def open(self, filename=None):
         old_filename = self.filename  # in case open operations fail, we can reset the file name
-        self.filename = filedialog.askopenfilename(filetypes=(('*.dme', '*.dme'), ('*.csv', '*.csv')))
-        if self.filename == ():
-            return
+        if not filename:
+            self.filename = filedialog.askopenfilename(filetypes=(('*.dme', '*.dme'), ('*.csv', '*.csv')))
+            if self.filename == ():
+                return
+        else:
+            self.filename = filename
         try:
             with open(self.filename, 'rb') as open_file:
                 save_data = pickle.load(open_file)

@@ -36,6 +36,7 @@ class Cell(tk.Entry):
             overstrike=font_dict["strikethrough"]
         )
         self.formatting["font"] = font_obj
+        self.configure(font=self.formatting["font"])
 
 
     def get_formatting(self):
@@ -96,7 +97,7 @@ class Cell(tk.Entry):
 
     def toggle_strikethrough(self):
         font = self.formatting["font"]
-        if font.cget('strikethrough') == 1:
+        if font.cget('overstrike') == 1:
             font.configure(overstrike=0)
         else:
             font.configure(overstrike=1)
@@ -113,6 +114,8 @@ class CellArea(ttk.Frame):
         self.cells_dict = {}
         self.iterator_pos = 0
         self.cell_count = 0
+        self.default_cell_foreground = "#ffffff"
+        self.default_cell_background = "#000000"
 
         for i, label in enumerate(self.labels_columns):
             column_label = ttk.Label(self, text=label)
@@ -143,17 +146,28 @@ class CellArea(ttk.Frame):
             self.set_cell_equ(cell_id, "")
             self.reset_cell_formatting(cell_id)
             self.set_cell_content(cell_id, "")
+            self.set_cell_background(cell_id, self.default_cell_background)
+            self.set_cell_foreground(cell_id, self.default_cell_foreground)
 
     def set_all_cells_attributes(self, attr_dict):
         for cell_id in attr_dict.keys():
             self.set_cell_equ(cell_id, attr_dict[cell_id]["equation"])
             self.set_cell_formatting(cell_id, attr_dict[cell_id]["formatting"])
             self.set_cell_content(cell_id, attr_dict[cell_id]["content"])
+            self.set_cell_background(cell_id, attr_dict[cell_id]["background"])
+            self.set_cell_background(cell_id, attr_dict[cell_id]["foreground"])
 
     def reset_cell_formatting(self, cell_id):
         cell = self.cells_dict[cell_id]
         cell.reset_formatting()
 
+    def set_cell_foreground(self, cell_id, color):
+        cell = self.cells_dict[cell_id]
+        cell.configure(background=self.default_cell_foreground)
+
+    def set_cell_background(self, cell_id, color):
+        cell = self.cells_dict[cell_id]
+        cell.configure(background=self.default_cell_background)
 
     def set_cell_content(self, cell_id, content):
         cell = self.cells_dict[cell_id]
