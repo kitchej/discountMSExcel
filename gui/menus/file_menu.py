@@ -59,19 +59,25 @@ class FileMenu(tk.Menu):
         try:
             with open(self.filename, 'rb') as open_file:
                 save_data = pickle.load(open_file)
-                self.parent.cell_area.set_all_cells_attributes(save_data)
-            self.parent.title(self.filename.split("/")[-1])
-            self.parent.set_last_save(clear_time=True)
         except FileNotFoundError:
-            messagebox.showerror(title="Error", message="File not found")
+            messagebox.showerror(title="Error", message=f"Could not open {self.filename}")
             self.filename = old_filename
+            return
         except PermissionError:
             messagebox.showerror(title="Error", message="Current user does not have permission to save this to this"
                                                         "directory")
             self.filename = old_filename
+            return
         except OSError:
             messagebox.showerror(title="Error", message="Cannot save file")
             self.filename = old_filename
+            return
+
+        self.parent.cell_area.clear_all_cells_attributes()
+        self.parent.set_last_save(clear_time=True)
+        self.parent.cell_area.set_all_cells_attributes(save_data)
+        self.parent.title(self.filename.split("/")[-1])
+        self.parent.set_last_save(clear_time=True)
 
     def new(self):
         answer = messagebox.askyesnocancel(title='Save?', message=f"Save {self.filename} before creating new file?")

@@ -10,13 +10,19 @@ class Cell(tk.Entry):
         self.id = cell_id
         self.equ = ""
         self.formatting = {
-                "font": tkfont.Font(family="Helvetica", size=12),
-                "bg": "#000000",
-                "fg": "#FFFFFF"
-            }
-        self.set_bg(self.formatting["bg"])
-        self.set_bg(self.formatting["fg"])
-        self.configure(font=self.formatting["font"])
+            "font": {
+                "family": "Helvetica",
+                "size": 12,
+                "slant": "roman",
+                "weight": "normal",
+                "underline": 0,
+                "strikethrough": 0
+            },
+            "bg": "#FFFFFF",
+            "fg": "#000000"
+        }
+        self.font = tkfont.Font(family=self.formatting["font"]["family"], size=self.formatting["font"]["size"])
+        self.configure(font=self.font)
 
 
     def get_equ(self):
@@ -25,40 +31,40 @@ class Cell(tk.Entry):
     def set_equ(self, equ):
         self.equ = equ
 
-    def set_formatting(self, font_dict):
-        font_obj = tkfont.Font()
-        font_obj.configure(
-            family=font_dict["family"],
-            size=font_dict["size"],
-            slant=font_dict["slant"],
-            weight=font_dict["weight"],
-            underline=font_dict["underline"],
-            overstrike=font_dict["strikethrough"]
+    def set_formatting(self, formatting_dict):
+        self.font.configure(
+            family=formatting_dict["font"]["family"],
+            size=formatting_dict["font"]["size"],
+            slant=formatting_dict["font"]["slant"],
+            weight=formatting_dict["font"]["weight"],
+            underline=formatting_dict["font"]["underline"],
+            overstrike=formatting_dict["font"]["strikethrough"]
         )
-        self.formatting["font"] = font_obj
-        self.configure(font=self.formatting["font"])
+        self.configure(font=self.font)
+        self.set_bg(formatting_dict["bg"])
+        self.set_fg(formatting_dict["fg"])
 
 
     def get_formatting(self):
-        font_obj = self.formatting["font"]
-        font_dict = {
-            "family": font_obj.cget("family"),
-            "size": font_obj.cget("size"),
-            "slant": font_obj.cget("slant"),
-            "weight": font_obj.cget("weight"),
-            "underline": font_obj.cget("underline"),
-            "strikethrough": font_obj.cget("overstrike")
-        }
-
-        return font_dict
+        return self.formatting
 
     def reset_formatting(self):
         self.formatting = {
-            "font": tkfont.Font(family="Helvetica", size=12),
-            "bg": "#000000",
-            "fg": "#FFFFFF"
+            "font": {
+                "family": "Helvetica",
+                "size": 12,
+                "slant": "roman",
+                "weight": "normal",
+                "underline": 0,
+                "strikethrough": 0
+            },
+            "bg": "#FFFFFF",
+            "fg": "#000000"
         }
-        self.configure(font=self.formatting["font"])
+        self.font = tkfont.Font(family=self.formatting["font"]["family"], size=self.formatting["font"]["size"])
+        self.configure(font=self.font)
+        self.set_bg(self.formatting["bg"])
+        self.set_fg(self.formatting["fg"])
 
     def set_bg(self, color: str):
         self.configure(background=color)
@@ -69,40 +75,43 @@ class Cell(tk.Entry):
         self.formatting["fg"] = color
 
     def toggle_bold(self):
-        font = self.formatting["font"]
-        if font.cget('weight') == 'normal':
-            font.configure(weight='bold')
+        if self.font.cget('weight') == 'normal':
+            self.font.configure(weight='bold')
+            self.formatting["font"]["weight"] = 'bold'
         else:
-            font.configure(weight='normal')
-        self.configure(font=font)
-        self.formatting.update({"font": font})
+            self.font.configure(weight='normal')
+            self.formatting["font"]["weight"] = 'normal'
+        self.configure(font=self.font)
+
 
     def toggle_italics(self):
-        font = self.formatting["font"]
-        if font.cget('slant') == 'italic':
-            font.configure(slant='roman')
+        if self.font.cget('slant') == 'italic':
+            self.font.configure(slant='roman')
+            self.formatting["font"]["slant"] = 'roman'
         else:
-            font.configure(slant='italic')
-        self.configure(font=font)
-        self.formatting.update({"font": font})
+            self.font.configure(slant='italic')
+            self.formatting["font"]["slant"] = 'italic'
+        self.configure(font=self.font)
+
 
     def toggle_underline(self):
-        font = self.formatting["font"]
-        if font.cget('underline') == 1:
-            font.configure(underline=0)
+        if self.font.cget('underline') == 0:
+            self.font.configure(underline=1)
+            self.formatting["font"]["underline"] = 1
         else:
-            font.configure(underline=1)
-        self.configure(font=font)
-        self.formatting.update({"font": font})
+            self.font.configure(underline=0)
+            self.formatting["font"]["underline"] = 0
+        self.configure(font=self.font)
+
 
     def toggle_strikethrough(self):
-        font = self.formatting["font"]
-        if font.cget('overstrike') == 1:
-            font.configure(overstrike=0)
+        if self.font.cget('strikethrough') == 0:
+            self.font.configure(overstrike=1)
+            self.formatting["font"]["strikethrough"] = 1
         else:
-            font.configure(overstrike=1)
-        self.configure(font=font)
-        self.formatting.update({"font": font})
+            self.font.configure(overstrike=0)
+            self.formatting["font"]["strikethrough"] = 0
+        self.configure(font=self.font)
 
 
 class CellArea(ttk.Frame):
@@ -114,8 +123,8 @@ class CellArea(ttk.Frame):
         self.cells_dict = {}
         self.iterator_pos = 0
         self.cell_count = 0
-        self.default_cell_foreground = "#ffffff"
-        self.default_cell_background = "#000000"
+        self.default_cell_foreground = "#000000"
+        self.default_cell_background = "#FFFFFF"
 
         for i, label in enumerate(self.labels_columns):
             column_label = ttk.Label(self, text=label)
@@ -144,22 +153,14 @@ class CellArea(ttk.Frame):
     def clear_all_cells_attributes(self):
         for cell_id in self.cells_dict.keys():
             self.set_cell_equ(cell_id, "")
-            self.reset_cell_formatting(cell_id)
             self.set_cell_content(cell_id, "")
-            self.set_cell_background(cell_id, self.default_cell_background)
-            self.set_cell_foreground(cell_id, self.default_cell_foreground)
+            self.reset_cell_formatting(cell_id)
 
     def set_all_cells_attributes(self, attr_dict):
         for cell_id in attr_dict.keys():
             self.set_cell_equ(cell_id, attr_dict[cell_id]["equation"])
             self.set_cell_formatting(cell_id, attr_dict[cell_id]["formatting"])
             self.set_cell_content(cell_id, attr_dict[cell_id]["content"])
-            self.set_cell_background(cell_id, attr_dict[cell_id]["background"])
-            self.set_cell_background(cell_id, attr_dict[cell_id]["foreground"])
-
-    def reset_cell_formatting(self, cell_id):
-        cell = self.cells_dict[cell_id]
-        cell.reset_formatting()
 
     def set_cell_foreground(self, cell_id, color):
         cell = self.cells_dict[cell_id]
@@ -181,6 +182,10 @@ class CellArea(ttk.Frame):
     def set_cell_formatting(self, cell_id, formatting_dict):
         cell = self.cells_dict[cell_id]
         cell.set_formatting(formatting_dict)
+
+    def reset_cell_formatting(self, cell_id):
+        cell = self.cells_dict[cell_id]
+        cell.reset_formatting()
 
     def get_cell_equ(self, cell_id):
         return self.cells_dict[cell_id].get_equ()

@@ -27,9 +27,9 @@ class FormatMenu(tk.Menu):
 
     def change_fg(self):
         color = colorchooser.askcolor()
-        self.parent.current_cell.configure(foreground=color[1])
+        self.parent.current_cell.set_fg(color[1])
 
     def change_bg(self):
         color = colorchooser.askcolor()
-        self.parent.current_cell.configure(background=color[1])
+        self.parent.current_cell.set_bg(color[1])
 
