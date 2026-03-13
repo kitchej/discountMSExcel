@@ -1,4 +1,3 @@
-import tkinter.ttk as ttk
 import tkinter as tk
 from tkinter import colorchooser
 

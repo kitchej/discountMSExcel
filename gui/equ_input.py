@@ -3,6 +3,7 @@ import tkinter.ttk as ttk
 import tkinter as tk
 
 import backend.equations as equ
+from gui.command_select_dialog import CommandSelection
 
 class EquInput(ttk.Frame):
     def __init__(self, parent, *args, **kwargs):
@@ -23,11 +24,22 @@ class EquInput(ttk.Frame):
         self.cell_coord_pattern = re.compile(r'[A-K]\d{1,2}')
 
         self.insert_btn = ttk.Button(self, text="Insert", command=self.insert_equ)
-        self.cell_entry = tk.Entry(self, exportselection=0, width=4, relief=tk.FLAT, borderwidth=5, border=2, highlightthickness=1)
+        self.cell_entry = tk.Entry(self, exportselection=0,
+                                   width=4,
+                                   relief=tk.FLAT,
+                                   borderwidth=5,
+                                   border=2,
+                                   highlightthickness=1)
         self.cell_entry.insert(0, 'A1')
         self.equal_lab = ttk.Label(self, text="=")
-        self.function_btn = ttk.Button(self, text="𝑓(𝑥)")
-        self.equ_entry = tk.Entry(self, exportselection=0, width=100, relief=tk.FLAT, borderwidth=5, border=2, highlightthickness=1)
+        self.function_btn = ttk.Button(self, text="𝑓(𝑥)", command=self.open_equation_select)
+        self.equ_entry = tk.Entry(self,
+                                  exportselection=0,
+                                  width=100,
+                                  relief=tk.FLAT,
+                                  borderwidth=5,
+                                  border=2,
+                                  highlightthickness=1)
 
         self.insert_btn.grid(row=0, column=0, padx=self.parent.padx, pady=self.parent.pady)
         self.cell_entry.grid(row=0, column=1, padx=self.parent.padx, pady=self.parent.pady)
@@ -35,29 +47,37 @@ class EquInput(ttk.Frame):
         self.function_btn.grid(row=0, column=3, padx=self.parent.padx, pady=self.parent.pady)
         self.equ_entry.grid(row=0, column=4, padx=self.parent.padx, pady=self.parent.pady)
 
+    def open_equation_select(self):
+        win = tk.Toplevel(self)
+        _ = CommandSelection(win, self)
+        win.mainloop()
+
     def set_current_cell(self, cell_id):
         self.cell_entry.configure(background="white", foreground="black")
         self.cell_entry.delete(0, tk.END)
         self.cell_entry.insert(0, cell_id)
 
-    def set_equ(self, equ):
+    def set_equ(self, equation):
         self.equ_entry.delete(0, tk.END)
-        self.equ_entry.insert(0, equ)
+        self.equ_entry.insert(0, equation)
 
     def parse_equation(self, equation):
         if equation == "":
             return 'ERROR'
         equation = equation.upper()
         equation = equation.split('(')
-        if len(equation) == 0:
+        if len(equation) != 2:
             return 'ERROR'
         operator = equation[0]
         args = equation[1].strip(')')
 
         if len(args.split("::")) > 1:
             args = args.split('::')
-            start_value = int(args[0][1])
-            end_value = int(args[1][1])
+            try:
+                start_value = int(args[0][1])
+                end_value = int(args[1][1])
+            except (IndexError, ValueError):
+                return 'ERROR'
             column = args[0][0]
             number_of_cells = end_value - start_value
             included_cells = [args[0]]
