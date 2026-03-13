@@ -3,7 +3,6 @@ import tkinter.ttk as ttk
 import tkinter as tk
 
 import backend.equations as equ
-from gui.command_select_dialog import CommandSelection
 
 class EquInput(ttk.Frame):
     def __init__(self, parent, *args, **kwargs):
@@ -32,25 +31,24 @@ class EquInput(ttk.Frame):
                                    highlightthickness=1)
         self.cell_entry.insert(0, 'A1')
         self.equal_lab = ttk.Label(self, text="=")
-        self.function_btn = ttk.Button(self, text="𝑓(𝑥)", command=self.open_equation_select)
-        self.equ_entry = tk.Entry(self,
+        self.equ_entry = ttk.Combobox(self,
                                   exportselection=0,
                                   width=100,
-                                  relief=tk.FLAT,
-                                  borderwidth=5,
-                                  border=2,
-                                  highlightthickness=1)
+                                  values=list(self.equations.keys()))
 
         self.insert_btn.grid(row=0, column=0, padx=self.parent.padx, pady=self.parent.pady)
         self.cell_entry.grid(row=0, column=1, padx=self.parent.padx, pady=self.parent.pady)
         self.equal_lab.grid(row=0, column=2, padx=self.parent.padx, pady=self.parent.pady)
-        self.function_btn.grid(row=0, column=3, padx=self.parent.padx, pady=self.parent.pady)
-        self.equ_entry.grid(row=0, column=4, padx=self.parent.padx, pady=self.parent.pady)
+        self.equ_entry.grid(row=0, column=3, padx=self.parent.padx, pady=self.parent.pady)
+        self.equ_entry.bind("<<ComboboxSelected>>", self.get_selection)
+        self.equ_entry.bind('<KeyRelease>', self.insert_equ)
 
-    def open_equation_select(self):
-        win = tk.Toplevel(self)
-        _ = CommandSelection(win, self)
-        win.mainloop()
+    def get_selection(self, event):
+        equ = f"{self.equ_entry.get()}()"
+        self.equ_entry.set(equ)
+        self.equ_entry.focus_set()
+        self.equ_entry.icursor(len(equ) - 1)
+        self.equ_entry.selection_clear()
 
     def set_current_cell(self, cell_id):
         self.cell_entry.configure(background="white", foreground="black")
@@ -66,6 +64,7 @@ class EquInput(ttk.Frame):
             return 'ERROR'
         equation = equation.upper()
         equation = equation.split('(')
+        # print(equation)
         if len(equation) != 2:
             return 'ERROR'
         operator = equation[0]
@@ -104,8 +103,9 @@ class EquInput(ttk.Frame):
                 values.append(arg)
         return self.equations[operator](values)
 
-    def insert_equ(self):
+    def insert_equ(self, *args):
         result = self.parse_equation(self.equ_entry.get())
+        print(result)
         try:
             cell_id = self.cell_entry.get().upper()
             self.parent.cell_area.set_cell_content(cell_id, result)
