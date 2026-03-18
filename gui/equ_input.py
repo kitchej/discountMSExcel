@@ -64,7 +64,6 @@ class EquInput(ttk.Frame):
             return 'ERROR'
         equation = equation.upper()
         equation = equation.split('(')
-        # print(equation)
         if len(equation) != 2:
             return 'ERROR'
         operator = equation[0]
@@ -105,12 +104,12 @@ class EquInput(ttk.Frame):
 
     def insert_equ(self, *args):
         result = self.parse_equation(self.equ_entry.get())
-        print(result)
+        cell_id = self.cell_entry.get().upper()
         try:
-            cell_id = self.cell_entry.get().upper()
             self.parent.cell_area.set_cell_content(cell_id, result)
-            self.parent.cell_area.set_cell_equ(cell_id, self.equ_entry.get())
-            self.set_current_cell(cell_id)
         except KeyError:
             self.cell_entry.configure(background="red", foreground="white")
+            return
+        self.parent.cell_area.set_cell_equ(cell_id, self.equ_entry.get())
+        self.set_current_cell(cell_id)
 

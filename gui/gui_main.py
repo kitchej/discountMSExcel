@@ -1,4 +1,3 @@
-import tkinter.ttk as ttk
 import tkinter as tk
 import os
 from datetime import datetime
@@ -14,30 +13,15 @@ from gui.cell_area import CellArea, Cell
 from gui.status_bar import StatusBar
 
 
-class Style:
-    def __init__(self):
-        # style names must be "newname.oldname"
-        self.btn_style = ttk.Style()
-        self.btn_style.configure("TButton", margin=1)
-
-        self.test = ttk.Style()
-        self.test.configure("new.TLabel", background="blue", foregorund='White', borderwidth=12)
-
-        self.cell = ttk.Style()
-        self.cell.configure("default.TEntry", borderwidth=2)
-
-
 class MainWindow(tk.Tk):
     def __init__(self, in_file=None):
         tk.Tk.__init__(self)
         self.padx = 2
         self.pady = 2
 
-        self.style = Style()
         self.title("Discount MS Excel")
         self.geometry('1400x950')
         self.iconphoto = tk.PhotoImage(False, file=os.path.join('gui', 'icons', 'main_icon.png'))
-        self.current_cell = None
 
         self.main_menu = tk.Menu(self)
         self.file_menu = FileMenu(self)
@@ -61,6 +45,7 @@ class MainWindow(tk.Tk):
 
         self.cell_canvas = tk.Canvas(master=self.canvas_frame, relief=tk.FLAT, highlightthickness=0)
         self.cell_area = CellArea(self, master=self.cell_canvas)
+        self.current_cell = self.cell_area.get_cell_by_index(0)
         self.cell_canvas.create_window((0, 0), window=self.cell_area, anchor=tk.NW)
         self.scrollbar_v = tk.Scrollbar(self.canvas_frame, orient=tk.VERTICAL, command=self.cell_canvas.yview)
         self.scrollbar_h = tk.Scrollbar(self.canvas_frame, orient=tk.HORIZONTAL, command=self.cell_canvas.xview)
@@ -80,9 +65,66 @@ class MainWindow(tk.Tk):
 
         self.cell_area.bind('<Configure>', self.on_cell_area_configure)
         self.bind('<Button-1>', self.update_cells)
+        self.bind('<Left>', self.nav_left)
+        self.bind('<Right>', self.nav_right)
+        self.bind('<Up>', self.nav_up)
+        self.bind('<Down>', self.nav_down)
+        self.bind('<B1-Motion>', self.cell_area.select_cells)
+        self.bind('<Control_L>c', self.cell_area.multi_copy)
+        self.bind('<Control_L>x', self.cell_area.multi_cut)
+        self.bind('<Control_L>v', self.cell_area.multi_paste)
 
         if in_file is not None:
             self.file_menu.open(in_file)
+
+    def nav_left(self, *args):
+        cell_index = self.cell_area.get_cell_index(self.current_cell.id)
+        new_index = cell_index - 60
+        if new_index < 0:
+            return
+        try:
+            cell = self.cell_area.get_cell_by_index(new_index)
+        except KeyError:
+            return
+        cell.focus_set()
+        self.update_cells(None)
+
+    def nav_right(self, *args):
+        cell_index = self.cell_area.get_cell_index(self.current_cell.id)
+        new_index = cell_index + 60
+        if new_index >= self.cell_area.cell_count:
+            return
+        try:
+            cell = self.cell_area.get_cell_by_index(new_index)
+        except KeyError:
+            return
+        cell.focus_set()
+        self.update_cells(None)
+
+    def nav_up(self, *args):
+        cell_index = self.cell_area.get_cell_index(self.current_cell.id)
+        new_index = cell_index - 1
+        if new_index < 0:
+            return
+        try:
+            cell = self.cell_area.get_cell_by_index(new_index)
+        except KeyError:
+            return
+        cell.focus_set()
+        self.update_cells(None)
+
+    def nav_down(self, *args):
+        cell_index = self.cell_area.get_cell_index(self.current_cell.id)
+        new_index = cell_index + 1
+        if new_index > self.cell_area.cell_count:
+            return
+        try:
+            cell = self.cell_area.get_cell_by_index(new_index)
+        except KeyError:
+            return
+        cell.focus_set()
+        self.update_cells(None)
+
 
     def set_last_save(self, clear_time=False):
         self.status_bar.set_last_save(f"Last Save: {datetime.now().strftime('%I:%M %p')}")
@@ -94,9 +136,15 @@ class MainWindow(tk.Tk):
     def update_cells(self, event):
         # Update equation entry with current cell
         cell = self.focus_get()
-        if isinstance(cell, Cell):
-            self.equ_bar.set_current_cell(cell.id)
-            self.equ_bar.set_equ(cell.equ)
-            self.current_cell = cell
-            self.format_bar.set_fg_button_color(self.current_cell.get_fg())
-            self.format_bar.set_bg_button_color(self.current_cell.get_bg())
+        if not isinstance(cell, Cell):
+            return
+        self.equ_bar.set_current_cell(cell.id)
+        self.equ_bar.set_equ(cell.equ)
+        self.current_cell = cell
+        self.format_bar.set_fg_button_color(self.current_cell.get_fg())
+        self.format_bar.set_bg_button_color(self.current_cell.get_bg())
+
+        self.cell_area.reset_multi_cell_select()
+
+
+
