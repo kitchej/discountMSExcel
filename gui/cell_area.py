@@ -24,7 +24,6 @@ class Cell(tk.Entry):
         self.font = tkfont.Font(family=self.formatting["font"]["family"], size=self.formatting["font"]["size"])
         self.configure(font=self.font)
 
-
     def set_content(self, content):
         self.delete(0, tk.END)
         self.insert(0, content)
@@ -65,7 +64,6 @@ class Cell(tk.Entry):
         self.configure(font=self.font)
         self.set_bg(formatting_dict["bg"])
         self.set_fg(formatting_dict["fg"])
-
 
     def get_formatting(self):
         return self.formatting
@@ -111,7 +109,6 @@ class Cell(tk.Entry):
             self.formatting["font"]["weight"] = 'normal'
         self.configure(font=self.font)
 
-
     def toggle_italics(self):
         if self.font.cget('slant') == 'italic':
             self.font.configure(slant='roman')
@@ -121,7 +118,6 @@ class Cell(tk.Entry):
             self.formatting["font"]["slant"] = 'italic'
         self.configure(font=self.font)
 
-
     def toggle_underline(self):
         if self.font.cget('underline') == 0:
             self.font.configure(underline=1)
@@ -130,7 +126,6 @@ class Cell(tk.Entry):
             self.font.configure(underline=0)
             self.formatting["font"]["underline"] = 0
         self.configure(font=self.font)
-
 
     def toggle_strikethrough(self):
         if self.font.cget('overstrike') == 0:
@@ -172,14 +167,33 @@ class CellArea(ttk.Frame):
                 self.cell_count += 1
                 self.cell_keys.append(cell_id)
 
+    def copy_to_clipboard(self):
+        self.clipboard.clear()
+        self.entered_cells.sort(key=lambda x: x.id[1:])
+        for cell in self.entered_cells:
+            cell.clear_highlight()
+            self.clipboard.append({
+                "id": cell.id,
+                "content": cell.get_content(),
+                "equ": cell.get_equ()
+            })
 
-    def revise_equation(self, equ, dest_row, dest_column):
-        """
-        1.) Calculate relative distance between the column of arguments and column of the equation
-        2.) Do the same for the rows
-        3.) Add these offsets to the arguments of the equation
-        """
-        pass
+    def revise_equation(self, equ, equ_src_cell_id, dest_root_row, dest_root_column):
+        _, _, cell_strs = self.parent.parse_equation(equ)
+        src_column = equ_src_cell_id[0]
+        dest_root_row = int(dest_root_row)
+        smallest_cell_row = min([int(cell_str[1:]) for cell_str in cell_strs if cell_str[0] == src_column])
+        relative_dist = int(dest_root_row) - smallest_cell_row
+        for cell_str in cell_strs:
+            if cell_str[0] == src_column:
+                src_row = int(cell_str[1:])
+                if relative_dist != 0:
+                    row = src_row + relative_dist
+                else:
+                    row = src_row
+                new_id = f"{dest_root_column}{row}"
+                equ = equ.replace(cell_str, new_id)
+        return equ
 
     def reset_multi_cell_select(self):
         self.root_entry = None
@@ -213,55 +227,46 @@ class CellArea(ttk.Frame):
             self.entered_cells.pop()
 
     def multi_copy(self, *args):
-        self.clipboard.clear()
-        for cell in self.entered_cells:
-            cell.clear_highlight()
-            self.clipboard.append(cell)
+        self.copy_to_clipboard()
         self.entered_cells.clear()
         return 'break' # override default copy behavior
 
     def multi_cut(self, *args):
-        pass
-        # global clipboard
-        # clipboard.clear()
-        # for cell in entered_cells:
-        #     cell.configure(background='#ffffff')
-        #     clipboard.append(cell.get())
-        #     cell.delete(0, END)
-        # for colored_cell in colored_cells:
-        #     colored_cell[0].configure(background=colored_cell[1])
-        # entered_cells.clear()
-        # return 'break' # override default cut behavior
+        self.copy_to_clipboard()
+        for cell in self.entered_cells:
+            cell.set_content("")
+            cell.set_equ("")
+        self.entered_cells.clear()
+        return 'break'  # override default cut behavior
 
     def multi_paste(self, *args):
         root_dest_cell = self.focus_get()
         if not isinstance(root_dest_cell, Cell):
             return 'break'
         dest_cell_index = self.get_cell_index(root_dest_cell.id)
+        cells_with_new_equ = []
         for cell in self.clipboard:
             try:
                 dest_cell = self.cell_dict[self.cell_keys[dest_cell_index]]
             except KeyError:
                 break
-            if cell.get_equ() == "":
-                dest_cell.set_content(cell.get_content())
-                print(dest_cell.id)
+            if cell["equ"] == "":
+                dest_cell.set_content(cell["content"])
             else:
-                self.revise_equation(cell.get_equ(), root_dest_cell.get_row(), root_dest_cell.get_column())
+                new_equ = self.revise_equation(cell["equ"], cell["id"], root_dest_cell.get_row(), root_dest_cell.get_column())
+                dest_cell.set_equ(new_equ)
+                cells_with_new_equ.append(dest_cell)
             dest_cell_index += 1
 
+        for cell in cells_with_new_equ:
+            cell.set_content(self.parent.compute_equation(cell.get_equ()))
         return 'break' # override default paste behavior
 
     def multi_delete(self, *args):
-        pass
-        # if entered_cells:
-        #     for cell in entered_cells:
-        #         cell.delete(0, END)
-        #     for cell in entered_cells:
-        #         cell.configure(background='#ffffff')
-        #     for colored_cell in colored_cells:
-        #         colored_cell[0].configure(background=colored_cell[1])
-
+        for cell in self.entered_cells:
+            cell.set_content("")
+            cell.set_equ("")
+            cell.clear_highlight()
 
     def get_cell_by_index(self, index):
         return self.cell_dict[self.cell_keys[index]]
@@ -326,4 +331,64 @@ class CellArea(ttk.Frame):
 
     def get_cell_formating(self, cell_id):
         return self.cell_dict[cell_id].get_formatting()
+
+    def nav_left(self, *args):
+        if not isinstance(self.parent.focus_get(), Cell):
+            return 'break'
+        cell_index = self.get_cell_index(self.parent.current_cell.id)
+        new_index = cell_index - 60
+        if new_index < 0:
+            return 'break'
+        try:
+            cell = self.get_cell_by_index(new_index)
+        except KeyError:
+            return 'break'
+        cell.focus_set()
+        self.parent.update_cells(None)
+        return 'break'
+
+    def nav_right(self, *args):
+        if not isinstance(self.parent.focus_get(), Cell):
+            return 'break'
+        cell_index = self.get_cell_index(self.parent.current_cell.id)
+        new_index = cell_index + 60
+        if new_index >= self.cell_count:
+            return 'break'
+        try:
+            cell = self.get_cell_by_index(new_index)
+        except KeyError:
+            return 'break'
+        cell.focus_set()
+        self.parent.update_cells(None)
+        return 'break'
+
+    def nav_up(self, *args):
+        if not isinstance(self.parent.focus_get(), Cell):
+            return 'break'
+        cell_index = self.get_cell_index(self.parent.current_cell.id)
+        new_index = cell_index - 1
+        if new_index < 0:
+            return 'break'
+        try:
+            cell = self.get_cell_by_index(new_index)
+        except KeyError:
+            return 'break'
+        cell.focus_set()
+        self.parent.update_cells(None)
+        return 'break'
+
+    def nav_down(self, *args):
+        if not isinstance(self.parent.focus_get(), Cell):
+            return 'break'
+        cell_index = self.get_cell_index(self.parent.current_cell.id)
+        new_index = cell_index + 1
+        if new_index > self.cell_count:
+            return 'break'
+        try:
+            cell = self.get_cell_by_index(new_index)
+        except KeyError:
+            return 'break'
+        cell.focus_set()
+        self.parent.update_cells(None)
+        return 'break'
 

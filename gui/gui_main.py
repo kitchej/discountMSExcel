@@ -11,6 +11,7 @@ from gui.format_bar import FormatBar
 from gui.equ_input import EquInput
 from gui.cell_area import CellArea, Cell
 from gui.status_bar import StatusBar
+import backend.equations as equ
 
 
 class MainWindow(tk.Tk):
@@ -18,6 +19,18 @@ class MainWindow(tk.Tk):
         tk.Tk.__init__(self)
         self.padx = 2
         self.pady = 2
+
+        self.equations = {
+            "SUM": equ.get_sum,
+            "DIFF": equ.get_difference,
+            "MULT": equ.get_product,
+            "DIV": equ.get_quotient,
+            "FLOOR": equ.get_floor,
+            "CEIL": equ.get_ceiling,
+            "TRUNC": equ.get_trunc,
+            "ROUND": equ.get_round,
+            "AVG": equ.get_average
+        }
 
         self.title("Discount MS Excel")
         self.geometry('1400x950')
@@ -63,77 +76,91 @@ class MainWindow(tk.Tk):
         self.toolbar_frame.pack(side=tk.TOP, anchor=tk.W, padx=5, pady=5)
         self.canvas_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
+        # Remove default bindings for Entry boxes
+        for seq in ("<<Cut>>", "<<Copy>>", "<<Paste>>", "<<PasteSelection>>"):
+            self.unbind_class(tk.Entry.winfo_class(self), seq)
+
         self.cell_area.bind('<Configure>', self.on_cell_area_configure)
         self.bind('<Button-1>', self.update_cells)
-        self.bind('<Left>', self.nav_left)
-        self.bind('<Right>', self.nav_right)
-        self.bind('<Up>', self.nav_up)
-        self.bind('<Down>', self.nav_down)
+        self.bind('<Left>', self.cell_area.nav_left)
+        self.bind('<Right>', self.cell_area.nav_right)
+        self.bind('<Up>', self.cell_area.nav_up)
+        self.bind('<Down>', self.cell_area.nav_down)
         self.bind('<B1-Motion>', self.cell_area.select_cells)
         self.bind('<Control_L>c', self.cell_area.multi_copy)
         self.bind('<Control_L>x', self.cell_area.multi_cut)
         self.bind('<Control_L>v', self.cell_area.multi_paste)
+        self.bind('<BackSpace>', self.cell_area.multi_delete)
+        self.bind("<MouseWheel>", self._on_mousewheel)
 
         if in_file is not None:
             self.file_menu.open(in_file)
 
-    def nav_left(self, *args):
-        cell_index = self.cell_area.get_cell_index(self.current_cell.id)
-        new_index = cell_index - 60
-        if new_index < 0:
-            return
-        try:
-            cell = self.cell_area.get_cell_by_index(new_index)
-        except KeyError:
-            return
-        cell.focus_set()
-        self.update_cells(None)
+    def _on_mousewheel(self, event):
+        self.cell_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
-    def nav_right(self, *args):
-        cell_index = self.cell_area.get_cell_index(self.current_cell.id)
-        new_index = cell_index + 60
-        if new_index >= self.cell_area.cell_count:
-            return
-        try:
-            cell = self.cell_area.get_cell_by_index(new_index)
-        except KeyError:
-            return
-        cell.focus_set()
-        self.update_cells(None)
+    def parse_equation(self, equation):
+        error_output = 'ERROR', [], []
+        if equation == "":
+            return error_output
+        equation = equation.upper()
+        equation = equation.split('(')
+        if len(equation) != 2:
+            return error_output
+        operator = equation[0]
+        args = equation[1].strip(')')
 
-    def nav_up(self, *args):
-        cell_index = self.cell_area.get_cell_index(self.current_cell.id)
-        new_index = cell_index - 1
-        if new_index < 0:
-            return
-        try:
-            cell = self.cell_area.get_cell_by_index(new_index)
-        except KeyError:
-            return
-        cell.focus_set()
-        self.update_cells(None)
+        if len(args.split(":")) > 1:
+            args = args.split(':')
+            try:
+                start_value = int(args[0][1:])
+                end_value = int(args[1][1:])
+            except (IndexError, ValueError):
+                return error_output
+            column = args[0][0]
+            number_of_cells = end_value - start_value
+            included_cells = [args[0]]
+            for _ in range(number_of_cells):
+                start_value += 1
+                included_cells.append(f"{column}{start_value}")
+            args = included_cells
+        else:
+            arg_strings = args.split(',')
+            args = []
+            for arg in arg_strings:
+                args.append(arg.strip())
 
-    def nav_down(self, *args):
-        cell_index = self.cell_area.get_cell_index(self.current_cell.id)
-        new_index = cell_index + 1
-        if new_index > self.cell_area.cell_count:
-            return
-        try:
-            cell = self.cell_area.get_cell_by_index(new_index)
-        except KeyError:
-            return
-        cell.focus_set()
-        self.update_cells(None)
+        if len(args) == 0:
+            return error_output
+        values = []
+        cells = []
+        for arg in args:
+            try:
+                arg_value = self.cell_area.get_cell_content(arg)
+                cells.append(arg)
+            except KeyError:
+                try:
+                    arg_value = int(arg)
+                except ValueError:
+                    return error_output
+            values.append(arg_value)
 
+        return operator, values, cells
+
+    def compute_equation(self, equation):
+        operator, values, _ = self.parse_equation(equation)
+        if operator == 'ERROR':
+            return 'ERROR'
+        return self.equations[operator](values)
 
     def set_last_save(self, clear_time=False):
         self.status_bar.set_last_save(f"Last Save: {datetime.now().strftime('%I:%M %p')}")
 
-    def on_cell_area_configure(self, event):
+    def on_cell_area_configure(self, *args):
         """Update scroll region when cell area size changes"""
         self.cell_canvas.configure(scrollregion=self.cell_canvas.bbox("all"))
 
-    def update_cells(self, event):
+    def update_cells(self, *args):
         # Update equation entry with current cell
         cell = self.focus_get()
         if not isinstance(cell, Cell):
@@ -145,6 +172,7 @@ class MainWindow(tk.Tk):
         self.format_bar.set_bg_button_color(self.current_cell.get_bg())
 
         self.cell_area.reset_multi_cell_select()
+
 
 
 

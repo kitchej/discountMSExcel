@@ -200,7 +200,7 @@ class CommandSelection:
 
     def test_equation(self, *args):
         equation = self.preview_equation.get()
-        ans = self.CL_obj.parse_equation(equation)
+        ans = self.CL_obj.compute_equation(equation)
         self.equation_error.set(ans)
 
 
