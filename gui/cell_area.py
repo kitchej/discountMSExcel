@@ -2,32 +2,33 @@ import decimal
 import tkinter.ttk as ttk
 import tkinter as tk
 from tkinter import font as tkfont
+DEFAULT_FONT_FAMILY = "Helvetica"
+DEFAULT_FONT_SIZE = 12
 
 
 class Cell(tk.Entry):
-    def __init__(self, parent, cell_id, *args, **kwargs):
+    def __init__(self, main_win, cell_id, *args, **kwargs):
         tk.Entry.__init__(self, *args, **kwargs)
-        self.parent = parent
+        self.main_win = main_win
         self.id = cell_id
         self.equ = ""
-        self.formatting = {
-            "font": {
-                "family": "Helvetica",
-                "size": 12,
-                "slant": "roman",
-                "weight": "normal",
-                "underline": 0,
-                "strikethrough": 0
-            },
-            "bg": "#FFFFFF",
-            "fg": "#000000",
-            "num_format": "Plain Text" # "Plain Text", "Scientific", "Financial"
-        }
-        self.font = tkfont.Font(family=self.formatting["font"]["family"], size=self.formatting["font"]["size"])
+        self.num_format = "Plain Text"
+        self.current_background = "#FFFFFF"
+        self.font = tkfont.Font(family=DEFAULT_FONT_FAMILY, size=DEFAULT_FONT_SIZE)
         self.configure(font=self.font)
+        self.is_highlighted = False
+
+    def configure(self, cnf = None, **kwargs):
+        try:
+            background_color = kwargs["background"]
+            if not self.is_highlighted:
+                self.current_background = background_color
+        except KeyError:
+            pass
+        super().configure(cnf, **kwargs)
 
     def to_plain_text(self):
-        self.formatting["num_format"] = "Plain Text"
+        self.num_format = "Plain Text"
         try:
             content = decimal.Decimal(self.get())
         except decimal.InvalidOperation:
@@ -35,29 +36,28 @@ class Cell(tk.Entry):
         self.set(content)
 
     def to_scientific(self):
-        self.formatting["num_format"] = "Scientific"
+        self.num_format = "Scientific"
 
     def to_financial(self):
-        self.formatting["num_format"] = "Financial"
+        self.num_format = "Financial"
 
     def set(self, content):
         self.delete(0, tk.END)
         self.insert(0, content)
 
     def get_row(self):
-        if len(self.id) <= 2:
-            return self.id[-1]
-        else:
-            return self.id[1:]
+        return self.id[1:]
 
     def get_column(self):
         return self.id[0]
 
     def highlight(self):
+        self.is_highlighted = True
         self.configure(background='#add8e6')
 
     def clear_highlight(self):
-        self.configure(background=self.formatting["bg"])
+        self.is_highlighted = False
+        self.configure(background=self.current_background)
 
     def get_equ(self):
         return self.equ
@@ -75,8 +75,8 @@ class Cell(tk.Entry):
             overstrike=formatting_dict["font"]["strikethrough"]
         )
         self.configure(font=self.font)
-        self.set_bg(formatting_dict["bg"])
-        self.set_fg(formatting_dict["fg"])
+        self.configure(background=formatting_dict["bg"])
+        self.configure(foreground=formatting_dict["fg"])
         if formatting_dict["num_format"] == "Plain Text":
             self.to_plain_text()
         elif formatting_dict["num_format"] == "Financial":
@@ -84,78 +84,49 @@ class Cell(tk.Entry):
         elif formatting_dict["num_format"] == "Scientific":
             self.to_scientific()
 
-
     def get_formatting(self):
-        return self.formatting
+        return {
+            "font": {
+                "family": self.font.cget("family"),
+                "size": self.font.cget("size"),
+                "slant":  self.font.cget("slant"),
+                "weight": self.font.cget("weight"),
+                "underline": self.font.cget("underline"),
+                "strikethrough": self.font.cget("overstrike")
+            },
+            "bg": self.current_background,
+            "fg": self.cget("foreground"),
+            "num_format": self.num_format  # "Plain Text", "Scientific", "Financial"
+        }
 
     def reset_formatting(self):
-        self.formatting = {
-            "font": {
-                "family": "Helvetica",
-                "size": 12,
-                "slant": "roman",
-                "weight": "normal",
-                "underline": 0,
-                "strikethrough": 0
-            },
-            "bg": "#FFFFFF",
-            "fg": "#000000",
-            "num_format": "Plain Text"
-        }
-        self.font = tkfont.Font(family=self.formatting["font"]["family"], size=self.formatting["font"]["size"])
-        self.configure(font=self.font)
-        self.set_bg(self.formatting["bg"])
-        self.set_fg(self.formatting["fg"])
-
-    def set_bg(self, color: str):
-        self.configure(background=color)
-        self.formatting["bg"] = color
-
-    def set_fg(self, color):
-        self.configure(foreground=color)
-        self.formatting["fg"] = color
-
-    def get_fg(self):
-        return self.formatting["fg"]
-
-    def get_bg(self):
-        return self.formatting["bg"]
-
+        self.font = tkfont.Font(family=DEFAULT_FONT_FAMILY, size=DEFAULT_FONT_SIZE)
+        self.configure(background="#FFFFFF")
+        self.configure(foreground="#000000")
+        
     def toggle_bold(self):
         if self.font.cget('weight') == 'normal':
             self.font.configure(weight='bold')
-            self.formatting["font"]["weight"] = 'bold'
         else:
             self.font.configure(weight='normal')
-            self.formatting["font"]["weight"] = 'normal'
-        self.configure(font=self.font)
 
     def toggle_italics(self):
         if self.font.cget('slant') == 'italic':
             self.font.configure(slant='roman')
-            self.formatting["font"]["slant"] = 'roman'
         else:
             self.font.configure(slant='italic')
-            self.formatting["font"]["slant"] = 'italic'
-        self.configure(font=self.font)
 
     def toggle_underline(self):
         if self.font.cget('underline') == 0:
             self.font.configure(underline=1)
-            self.formatting["font"]["underline"] = 1
         else:
             self.font.configure(underline=0)
-            self.formatting["font"]["underline"] = 0
-        self.configure(font=self.font)
 
     def toggle_strikethrough(self):
         if self.font.cget('overstrike') == 0:
             self.font.configure(overstrike=1)
-            self.formatting["font"]["strikethrough"] = 1
         else:
             self.font.configure(overstrike=0)
-            self.formatting["font"]["strikethrough"] = 0
-        self.configure(font=self.font)
 
 
 class CellArea(ttk.Frame):
@@ -190,7 +161,7 @@ class CellArea(ttk.Frame):
 
     def copy_to_clipboard(self):
         self.clipboard.clear()
-        self.entered_cells.sort(key=lambda x: x.id[1:])
+        self.entered_cells.sort(key=lambda x: x.get_row())
         for cell in self.entered_cells:
             cell.clear_highlight()
             self.clipboard.append({
@@ -264,7 +235,7 @@ class CellArea(ttk.Frame):
         root_dest_cell = self.focus_get()
         if not isinstance(root_dest_cell, Cell):
             return 'break'
-        dest_cell_index = self.get_cell_index(root_dest_cell.id)
+        dest_cell_index = self.index_of(root_dest_cell.id)
         cells_with_new_equ = []
         for cell in self.clipboard:
             try:
@@ -292,7 +263,7 @@ class CellArea(ttk.Frame):
     def get_cell_by_index(self, index):
         return self.cell_dict[self.cell_keys[index]]
 
-    def get_cell_index(self, cell_id):
+    def index_of(self, cell_id):
         return self.cell_keys.index(cell_id)
 
     def get_all_cells_attributes(self):
@@ -319,31 +290,23 @@ class CellArea(ttk.Frame):
             self.set_cell_equ(cell_id, attr_dict[cell_id]["equation"])
             self.set_cell_formatting(cell_id, attr_dict[cell_id]["formatting"])
 
-
     def set_cell_foreground(self, cell_id, color):
-        cell = self.cell_dict[cell_id]
-        cell.configure(background=self.default_cell_foreground)
+        self.cell_dict[cell_id].configure(background=color)
 
     def set_cell_background(self, cell_id, color):
-        cell = self.cell_dict[cell_id]
-        cell.configure(background=self.default_cell_background)
+        self.cell_dict[cell_id].configure(background=color)
 
     def set_cell_content(self, cell_id, content):
-        cell = self.cell_dict[cell_id]
-        cell.delete(0, tk.END)
-        cell.insert(0, content)
+        self.cell_dict[cell_id].set(content)
 
     def set_cell_equ(self, cell_id, equ):
-        cell = self.cell_dict[cell_id]
-        cell.set_equ(equ)
+        self.cell_dict[cell_id].set_equ(equ)
 
     def set_cell_formatting(self, cell_id, formatting_dict):
-        cell = self.cell_dict[cell_id]
-        cell.set_formatting(formatting_dict)
+        self.cell_dict[cell_id].set_formatting(formatting_dict)
 
     def reset_cell_formatting(self, cell_id):
-        cell = self.cell_dict[cell_id]
-        cell.reset_formatting()
+        self.cell_dict[cell_id].reset_formatting()
 
     def get_cell_equ(self, cell_id):
         return self.cell_dict[cell_id].get_equ()
@@ -354,63 +317,51 @@ class CellArea(ttk.Frame):
     def get_cell_formating(self, cell_id):
         return self.cell_dict[cell_id].get_formatting()
 
-    def nav_left(self, *args):
+    def _index_of_current_cell(self):
         if not isinstance(self.parent.focus_get(), Cell):
             return 'break'
-        cell_index = self.get_cell_index(self.parent.current_cell.id)
-        new_index = cell_index - 60
+        return self.index_of(self.parent.current_cell.id)
+
+    def _set_focused_cell(self, new_index):
+        cell = self.get_cell_by_index(new_index)
+        cell.focus_set()
+        self.parent.update_cells(None)
+
+    def nav_left(self, *args):
+        new_index = self._index_of_current_cell() - 60
         if new_index < 0:
             return 'break'
         try:
-            cell = self.get_cell_by_index(new_index)
+            self._set_focused_cell(new_index)
         except KeyError:
-            return 'break'
-        cell.focus_set()
-        self.parent.update_cells(None)
+            pass
         return 'break'
 
     def nav_right(self, *args):
-        if not isinstance(self.parent.focus_get(), Cell):
-            return 'break'
-        cell_index = self.get_cell_index(self.parent.current_cell.id)
-        new_index = cell_index + 60
+        new_index = self._index_of_current_cell() + 60
         if new_index >= self.cell_count:
             return 'break'
         try:
-            cell = self.get_cell_by_index(new_index)
+            self._set_focused_cell(new_index)
         except KeyError:
-            return 'break'
-        cell.focus_set()
-        self.parent.update_cells(None)
+            pass
         return 'break'
 
     def nav_up(self, *args):
-        if not isinstance(self.parent.focus_get(), Cell):
-            return 'break'
-        cell_index = self.get_cell_index(self.parent.current_cell.id)
-        new_index = cell_index - 1
+        new_index = self._index_of_current_cell() - 1
         if new_index < 0:
             return 'break'
         try:
-            cell = self.get_cell_by_index(new_index)
+            self._set_focused_cell(new_index)
         except KeyError:
-            return 'break'
-        cell.focus_set()
-        self.parent.update_cells(None)
+            pass
         return 'break'
 
     def nav_down(self, *args):
-        if not isinstance(self.parent.focus_get(), Cell):
-            return 'break'
-        cell_index = self.get_cell_index(self.parent.current_cell.id)
-        new_index = cell_index + 1
-        if new_index > self.cell_count:
-            return 'break'
+        new_index = self._index_of_current_cell() + 1
         try:
-            cell = self.get_cell_by_index(new_index)
+            self._set_focused_cell(new_index)
         except KeyError:
-            return 'break'
-        cell.focus_set()
-        self.parent.update_cells(None)
+            pass
         return 'break'
 

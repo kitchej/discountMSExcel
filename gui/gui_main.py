@@ -34,13 +34,12 @@ class MainWindow(tk.Tk):
 
         self.title("Discount MS Excel")
         self.geometry('1400x950')
-        self.iconphoto = tk.PhotoImage(False, file=os.path.join('gui', 'icons', 'main_icon.png'))
-
+        self.iconphoto(True, tk.PhotoImage(False, file=os.path.join('gui', 'icons', 'main_icon.png')))
         self.main_menu = tk.Menu(self)
         self.file_menu = FileMenu(self)
         self.edit_menu = EditMenu(self)
         self.format_menu = FormatMenu(self)
-        self.help_menu = HelpMenu(self)
+        self.help_menu = HelpMenu()
         self.main_menu.add_cascade(menu=self.file_menu, label='File')
         self.main_menu.add_cascade(menu=self.edit_menu, label='Edit')
         self.main_menu.add_cascade(menu=self.format_menu, label='Format')
@@ -80,7 +79,7 @@ class MainWindow(tk.Tk):
         for seq in ("<<Cut>>", "<<Copy>>", "<<Paste>>", "<<PasteSelection>>"):
             self.unbind_class(tk.Entry.winfo_class(self), seq)
 
-        self.cell_area.bind('<Configure>', self.on_cell_area_configure)
+        self.cell_area.bind('<Configure>', self._on_cell_area_configure)
         self.bind('<Button-1>', self.update_cells)
         self.bind('<Left>', self.cell_area.nav_left)
         self.bind('<Right>', self.cell_area.nav_right)
@@ -98,6 +97,9 @@ class MainWindow(tk.Tk):
 
     def _on_mousewheel(self, event):
         self.cell_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    def _on_cell_area_configure(self, *args):
+        self.cell_canvas.configure(scrollregion=self.cell_canvas.bbox("all"))
 
     def parse_equation(self, equation):
         error_output = 'ERROR', [], []
@@ -144,7 +146,6 @@ class MainWindow(tk.Tk):
                 except ValueError:
                     return error_output
             values.append(arg_value)
-
         return operator, values, cells
 
     def compute_equation(self, equation):
@@ -156,10 +157,6 @@ class MainWindow(tk.Tk):
     def set_last_save(self, clear_time=False):
         self.status_bar.set_last_save(f"Last Save: {datetime.now().strftime('%I:%M %p')}")
 
-    def on_cell_area_configure(self, *args):
-        """Update scroll region when cell area size changes"""
-        self.cell_canvas.configure(scrollregion=self.cell_canvas.bbox("all"))
-
     def update_cells(self, *args):
         # Update equation entry with current cell
         cell = self.focus_get()
@@ -168,10 +165,9 @@ class MainWindow(tk.Tk):
         self.equ_bar.set_current_cell(cell.id)
         self.equ_bar.set_equ(cell.equ)
         self.current_cell = cell
-        self.format_bar.set_fg_button_color(self.current_cell.get_fg())
-        self.format_bar.set_bg_button_color(self.current_cell.get_bg())
-        self.format_bar.set_format_combo(self.current_cell.formatting["num_format"])
-
+        self.format_bar.set_fg_button_color(self.current_cell.cget("foreground"))
+        self.format_bar.set_bg_button_color(self.current_cell.cget("background"))
+        self.format_bar.set_format_combo(self.current_cell.num_format)
         self.cell_area.reset_multi_cell_select()
 
 

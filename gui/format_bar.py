@@ -5,9 +5,9 @@ from tkinter import colorchooser
 
 
 class FormatBar(ttk.Frame):
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, main_win, *args, **kwargs):
         ttk.Frame.__init__(self, *args, **kwargs)
-        self.parent = parent
+        self.main_win = main_win
 
         self.font_paddingx = 4
         self.format_paddingx = 4
@@ -37,22 +37,22 @@ class FormatBar(ttk.Frame):
 
         self.format_combo.set("Plain Text")
 
-        self.bold_btn.grid(row=0, column=0, padx=self.parent.padx, pady=self.parent.pady)
-        self.italics_btn.grid(row=0, column=1, padx=self.parent.padx, pady=self.parent.pady)
-        self.underline_btn.grid(row=0, column=2, padx=self.parent.padx, pady=self.parent.pady)
-        self.strike_btn.grid(row=0, column=3, padx=self.parent.padx, pady=self.parent.pady)
-        self.background_lab.grid(row=0, column=4, padx=self.parent.padx, pady=self.parent.pady)
-        self.background_btn.grid(row=0, column=5, padx=self.parent.padx, pady=self.parent.pady)
-        self.foreground_lab.grid(row=0, column=6, padx=self.parent.padx, pady=self.parent.pady)
-        self.foreground_btn.grid(row=0, column=7, padx=self.parent.padx, pady=self.parent.pady)
-        self.format_lab.grid(row=0, column=10, padx=self.format_paddingx, pady=self.parent.pady)
-        self.format_combo.grid(row=0, column=11, padx=self.parent.padx, pady=self.parent.pady)
+        self.bold_btn.grid(row=0, column=0, padx=self.main_win.padx, pady=self.main_win.pady)
+        self.italics_btn.grid(row=0, column=1, padx=self.main_win.padx, pady=self.main_win.pady)
+        self.underline_btn.grid(row=0, column=2, padx=self.main_win.padx, pady=self.main_win.pady)
+        self.strike_btn.grid(row=0, column=3, padx=self.main_win.padx, pady=self.main_win.pady)
+        self.background_lab.grid(row=0, column=4, padx=self.main_win.padx, pady=self.main_win.pady)
+        self.background_btn.grid(row=0, column=5, padx=self.main_win.padx, pady=self.main_win.pady)
+        self.foreground_lab.grid(row=0, column=6, padx=self.main_win.padx, pady=self.main_win.pady)
+        self.foreground_btn.grid(row=0, column=7, padx=self.main_win.padx, pady=self.main_win.pady)
+        self.format_lab.grid(row=0, column=10, padx=self.format_paddingx, pady=self.main_win.pady)
+        self.format_combo.grid(row=0, column=11, padx=self.main_win.padx, pady=self.main_win.pady)
 
         self.format_combo.bind("<<ComboboxSelected>>", self.on_format_combo_select)
 
     def on_format_combo_select(self, *args):
         num_format = self.format_combo.get()
-        current_cell = self.parent.current_cell
+        current_cell = self.main_win.current_cell
         if num_format == "Plain Text":
             current_cell.to_plain_text()
         elif num_format == "Financial":
@@ -63,7 +63,6 @@ class FormatBar(ttk.Frame):
     def set_format_combo(self, option):
         self.format_combo.set(option)
 
-
     def set_fg_button_color(self, color):
         self.foreground_btn.configure(bg=color)
 
@@ -71,23 +70,23 @@ class FormatBar(ttk.Frame):
         self.background_btn.configure(bg=color)
 
     def toggle_bold(self):
-        self.parent.current_cell.toggle_bold()
+        self.main_win.current_cell.toggle_bold()
 
     def toggle_italics(self):
-        self.parent.current_cell.toggle_italics()
+        self.main_win.current_cell.toggle_italics()
 
     def toggle_underline(self):
-        self.parent.current_cell.toggle_underline()
+        self.main_win.current_cell.toggle_underline()
 
     def toggle_strikethrough(self):
-        self.parent.current_cell.toggle_strikethrough()
+        self.main_win.current_cell.toggle_strikethrough()
 
     def set_bg(self):
         color = colorchooser.askcolor()
-        self.parent.current_cell.set_bg(color[1])
+        self.main_win.current_cell.configure(background=color[1])
         self.set_bg_button_color(color[1])
 
     def set_fg(self):
         color = colorchooser.askcolor()
-        self.parent.current_cell.set_fg(color[1])
+        self.main_win.current_cell.configure(foreground=color[1])
         self.set_fg_button_color(color[1])
