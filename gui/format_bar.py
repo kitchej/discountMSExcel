@@ -48,6 +48,22 @@ class FormatBar(ttk.Frame):
         self.format_lab.grid(row=0, column=10, padx=self.format_paddingx, pady=self.parent.pady)
         self.format_combo.grid(row=0, column=11, padx=self.parent.padx, pady=self.parent.pady)
 
+        self.format_combo.bind("<<ComboboxSelected>>", self.on_format_combo_select)
+
+    def on_format_combo_select(self, *args):
+        num_format = self.format_combo.get()
+        current_cell = self.parent.current_cell
+        if num_format == "Plain Text":
+            current_cell.to_plain_text()
+        elif num_format == "Financial":
+            current_cell.to_financial()
+        elif num_format == "Scientific":
+            current_cell.to_scientific()
+
+    def set_format_combo(self, option):
+        self.format_combo.set(option)
+
+
     def set_fg_button_color(self, color):
         self.foreground_btn.configure(bg=color)
 

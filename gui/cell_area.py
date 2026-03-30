@@ -1,3 +1,4 @@
+import decimal
 import tkinter.ttk as ttk
 import tkinter as tk
 from tkinter import font as tkfont
@@ -19,17 +20,29 @@ class Cell(tk.Entry):
                 "strikethrough": 0
             },
             "bg": "#FFFFFF",
-            "fg": "#000000"
+            "fg": "#000000",
+            "num_format": "Plain Text" # "Plain Text", "Scientific", "Financial"
         }
         self.font = tkfont.Font(family=self.formatting["font"]["family"], size=self.formatting["font"]["size"])
         self.configure(font=self.font)
 
-    def set_content(self, content):
+    def to_plain_text(self):
+        self.formatting["num_format"] = "Plain Text"
+        try:
+            content = decimal.Decimal(self.get())
+        except decimal.InvalidOperation:
+            return
+        self.set(content)
+
+    def to_scientific(self):
+        self.formatting["num_format"] = "Scientific"
+
+    def to_financial(self):
+        self.formatting["num_format"] = "Financial"
+
+    def set(self, content):
         self.delete(0, tk.END)
         self.insert(0, content)
-
-    def get_content(self):
-        return self.get()
 
     def get_row(self):
         if len(self.id) <= 2:
@@ -64,6 +77,13 @@ class Cell(tk.Entry):
         self.configure(font=self.font)
         self.set_bg(formatting_dict["bg"])
         self.set_fg(formatting_dict["fg"])
+        if formatting_dict["num_format"] == "Plain Text":
+            self.to_plain_text()
+        elif formatting_dict["num_format"] == "Financial":
+            self.to_financial()
+        elif formatting_dict["num_format"] == "Scientific":
+            self.to_scientific()
+
 
     def get_formatting(self):
         return self.formatting
@@ -79,7 +99,8 @@ class Cell(tk.Entry):
                 "strikethrough": 0
             },
             "bg": "#FFFFFF",
-            "fg": "#000000"
+            "fg": "#000000",
+            "num_format": "Plain Text"
         }
         self.font = tkfont.Font(family=self.formatting["font"]["family"], size=self.formatting["font"]["size"])
         self.configure(font=self.font)
@@ -174,7 +195,7 @@ class CellArea(ttk.Frame):
             cell.clear_highlight()
             self.clipboard.append({
                 "id": cell.id,
-                "content": cell.get_content(),
+                "content": cell.get(),
                 "equ": cell.get_equ()
             })
 
@@ -234,7 +255,7 @@ class CellArea(ttk.Frame):
     def multi_cut(self, *args):
         self.copy_to_clipboard()
         for cell in self.entered_cells:
-            cell.set_content("")
+            cell.set("")
             cell.set_equ("")
         self.entered_cells.clear()
         return 'break'  # override default cut behavior
@@ -251,7 +272,7 @@ class CellArea(ttk.Frame):
             except KeyError:
                 break
             if cell["equ"] == "":
-                dest_cell.set_content(cell["content"])
+                dest_cell.set(cell["content"])
             else:
                 new_equ = self.revise_equation(cell["equ"], cell["id"], root_dest_cell.get_row(), root_dest_cell.get_column())
                 dest_cell.set_equ(new_equ)
@@ -259,12 +280,12 @@ class CellArea(ttk.Frame):
             dest_cell_index += 1
 
         for cell in cells_with_new_equ:
-            cell.set_content(self.parent.compute_equation(cell.get_equ()))
+            cell.set(self.parent.compute_equation(cell.get_equ()))
         return 'break' # override default paste behavior
 
     def multi_delete(self, *args):
         for cell in self.entered_cells:
-            cell.set_content("")
+            cell.set("")
             cell.set_equ("")
             cell.clear_highlight()
 
@@ -294,9 +315,10 @@ class CellArea(ttk.Frame):
 
     def set_all_cells_attributes(self, attr_dict):
         for cell_id in attr_dict.keys():
+            self.set_cell_content(cell_id, attr_dict[cell_id]["content"])
             self.set_cell_equ(cell_id, attr_dict[cell_id]["equation"])
             self.set_cell_formatting(cell_id, attr_dict[cell_id]["formatting"])
-            self.set_cell_content(cell_id, attr_dict[cell_id]["content"])
+
 
     def set_cell_foreground(self, cell_id, color):
         cell = self.cell_dict[cell_id]

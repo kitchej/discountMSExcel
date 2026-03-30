@@ -170,6 +170,7 @@ class MainWindow(tk.Tk):
         self.current_cell = cell
         self.format_bar.set_fg_button_color(self.current_cell.get_fg())
         self.format_bar.set_bg_button_color(self.current_cell.get_bg())
+        self.format_bar.set_format_combo(self.current_cell.formatting["num_format"])
 
         self.cell_area.reset_multi_cell_select()
 
