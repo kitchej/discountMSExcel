@@ -30,6 +30,7 @@ class FileMenu(tk.Menu):
             messagebox.showerror(title="Error", message=f"Could not save to {self.filepath}")
         except PermissionError:
             messagebox.showerror(title="Error", message=f"You do not have permission to save to {self.filepath}")
+        self.main_win.reset_is_edited()
 
     def save_as(self):
         new_filename = filedialog.asksaveasfilename(filetypes=(('*.dme', '*.dme'), ('*.csv', '*.csv')))
@@ -61,6 +62,7 @@ class FileMenu(tk.Menu):
         self.main_win.cell_area.set_all_cells_attributes(save_data)
         self.main_win.title(self.filepath.split("/")[-1])
         self.main_win.set_last_save(clear_time=True)
+        self.main_win.reset_is_edited()
 
     def new(self):
         answer = messagebox.askyesnocancel(title='Save?', message=f"Save {self.filepath} before creating new file?")
@@ -72,6 +74,7 @@ class FileMenu(tk.Menu):
             return
         self.main_win.cell_area.clear_all_cells_attributes()
         self.main_win.set_last_save(clear_time=True)
+        self.main_win.reset_is_edited()
 
 
 

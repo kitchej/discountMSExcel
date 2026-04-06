@@ -22,6 +22,7 @@ class Cell(tk.Entry):
         self.bind("<KeyRelease>", self._parse_decimal_value)
 
     def _parse_decimal_value(self, *args):
+        self.main_win.is_edited = True
         try:
             self.decimal_value = decimal.Decimal(self.get())
         except decimal.InvalidOperation:
@@ -39,6 +40,7 @@ class Cell(tk.Entry):
     def insert(self, index, string):
         super().insert(index, string)
         self._parse_decimal_value()
+        self.main_win.set_is_edited()
 
     def refresh_cell(self):
         if self.num_format == "Plain Text":
@@ -59,18 +61,21 @@ class Cell(tk.Entry):
         if self.decimal_value is not None:
             self.delete(0, tk.END)
             super().insert(0, self.decimal_value)
+            self.main_win.set_is_edited()
 
     def to_scientific(self):
         self.num_format = "Scientific"
         if self.decimal_value is not None:
             self.delete(0, tk.END)
             super().insert(0, f"{self.decimal_value:e}")
+            self.main_win.set_is_edited()
 
     def to_financial(self):
         self.num_format = "Financial"
         if self.decimal_value is not None:
             self.delete(0, tk.END)
             super().insert(0, f"${self.decimal_value:.2f}")
+            self.main_win.set_is_edited()
 
     def set(self, content):
         self.delete(0, tk.END)
@@ -184,7 +189,7 @@ class CellArea(ttk.Frame):
                 row_label = ttk.Label(self, text=row_num)
                 row_label.grid(row=row_num, column=0, padx=1)
                 cell_id = f"{label}{row_num}"
-                cell = Cell(self, cell_id, master=self, relief=tk.FLAT, borderwidth=5, border=2, highlightthickness=1)
+                cell = Cell(self.main_win, cell_id, master=self, relief=tk.FLAT, borderwidth=5, border=2, highlightthickness=1)
                 self.cell_dict.update({cell_id: cell})
                 cell.grid(row=row_num, column=i + 1)
                 self.cell_count += 1

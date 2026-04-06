@@ -1,7 +1,7 @@
 import tkinter as tk
 import os
 from datetime import datetime
-
+from tkinter import messagebox
 
 from gui.menus.file_menu import FileMenu
 from gui.menus.edit_menu import EditMenu
@@ -19,6 +19,7 @@ class MainWindow(tk.Tk):
         super().__init__()
         self.padx = 2
         self.pady = 2
+        self.is_edited = False
 
         self.equations = {
             "SUM": equ.get_sum,
@@ -31,7 +32,6 @@ class MainWindow(tk.Tk):
             "ROUND": equ.get_round,
             "AVG": equ.get_average
         }
-
         self.title("Discount MS Excel")
         self.geometry('1400x950')
         self.iconphoto(True, tk.PhotoImage(False, file=os.path.join('gui', 'icons', 'main_icon.png')))
@@ -91,6 +91,7 @@ class MainWindow(tk.Tk):
         self.bind('<Control_L>v', self.cell_area.multi_paste)
         self.bind('<BackSpace>', self.cell_area.multi_delete)
         self.bind("<MouseWheel>", self._on_mousewheel)
+        self.protocol('WM_DELETE_WINDOW', self._on_exit)
 
         if in_file is not None:
             self.file_menu.open(in_file)
@@ -100,6 +101,21 @@ class MainWindow(tk.Tk):
 
     def _on_cell_area_configure(self, *args):
         self.cell_canvas.configure(scrollregion=self.cell_canvas.bbox("all"))
+
+    def _on_exit(self, *args):
+        if self.is_edited:
+            answer = messagebox.askyesnocancel(title='Save?', message=f"Do you want to save {self.file_menu.filepath} before exiting?")
+            if answer:
+                self.file_menu.save()
+            elif answer is None:
+                return
+        self.quit()
+
+    def set_is_edited(self):
+        self.is_edited = True
+
+    def reset_is_edited(self):
+        self.is_edited = False
 
     def parse_equation(self, equation):
         error_output = 'ERROR', [], []
