@@ -16,7 +16,7 @@ import backend.equations as equ
 
 class MainWindow(tk.Tk):
     def __init__(self, in_file=None):
-        tk.Tk.__init__(self)
+        super().__init__()
         self.padx = 2
         self.pady = 2
 
@@ -137,14 +137,13 @@ class MainWindow(tk.Tk):
         values = []
         cells = []
         for arg in args:
+            cells.append(arg)
             try:
-                arg_value = self.cell_area.get_cell_content(arg)
-                cells.append(arg)
+                arg_value = self.cell_area.get_cell_decimal_value(arg)
             except KeyError:
-                try:
-                    arg_value = int(arg)
-                except ValueError:
-                    return error_output
+               return error_output
+            if arg_value is None:
+                return error_output
             values.append(arg_value)
         return operator, values, cells
 
@@ -158,16 +157,22 @@ class MainWindow(tk.Tk):
         self.status_bar.set_last_save(f"Last Save: {datetime.now().strftime('%I:%M %p')}")
 
     def update_cells(self, *args):
-        # Update equation entry with current cell
+        self.current_cell.refresh_cell()
         cell = self.focus_get()
         if not isinstance(cell, Cell):
             return
-        self.equ_bar.set_current_cell(cell.id)
-        self.equ_bar.set_equ(cell.equ)
         self.current_cell = cell
+
+        # Update equation entry with current cell
+        self.equ_bar.set_current_cell(self.current_cell.id)
+        self.equ_bar.set_equ(self.current_cell.equ)
+
+        # Update GUI to show attributes of current cell
         self.format_bar.set_fg_button_color(self.current_cell.cget("foreground"))
         self.format_bar.set_bg_button_color(self.current_cell.cget("background"))
         self.format_bar.set_format_combo(self.current_cell.num_format)
+
+        # General Reset and Clean-up
         self.cell_area.reset_multi_cell_select()
 
 

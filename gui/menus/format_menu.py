@@ -3,7 +3,7 @@ from tkinter import colorchooser
 
 class FormatMenu(tk.Menu):
     def __init__(self, main_win):
-        tk.Menu.__init__(self, tearoff=0)
+        super().__init__(tearoff=0)
         self.main_win = main_win
         self.add_command(label="Bold", accelerator="Ctrl+B", command=self.bold_text)
         self.add_command(label="Underline", accelerator="Ctrl+U", command=self.underline_text)

@@ -1,6 +1,5 @@
 from datetime import datetime
 import decimal
-import math
 
 
 def get_sum(args):

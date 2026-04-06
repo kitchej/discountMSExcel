@@ -5,7 +5,7 @@ import tkinter as tk
 
 class FileMenu(tk.Menu):
     def __init__(self, main_win):
-        tk.Menu.__init__(self, tearoff=0)
+        super().__init__(tearoff=0)
         self.main_win = main_win
         self.filepath = "Untitled.dme"
         self.add_command(label="Open", accelerator="Ctrl+O", command=self.open)

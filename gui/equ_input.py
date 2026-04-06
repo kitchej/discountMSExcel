@@ -4,7 +4,7 @@ import tkinter as tk
 
 class EquInput(ttk.Frame):
     def __init__(self, main_win, *args, **kwargs):
-        ttk.Frame.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.main_win = main_win
         self.insert_btn = ttk.Button(self, text="Insert", command=self.insert_equ)
         self.cell_entry = tk.Entry(self, exportselection=0,

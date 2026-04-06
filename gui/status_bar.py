@@ -3,7 +3,7 @@ import tkinter as tk
 
 class StatusBar(ttk.Frame):
     def __init__(self, main_win):
-        ttk.Frame.__init__(self)
+        super().__init__()
         self.main_win = main_win
         self.last_save_str = tk.StringVar()
         self.last_save_str.set("Not Saved")

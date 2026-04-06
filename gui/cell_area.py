@@ -2,13 +2,14 @@ import decimal
 import tkinter.ttk as ttk
 import tkinter as tk
 from tkinter import font as tkfont
+
 DEFAULT_FONT_FAMILY = "Helvetica"
 DEFAULT_FONT_SIZE = 12
 
 
 class Cell(tk.Entry):
     def __init__(self, main_win, cell_id, *args, **kwargs):
-        tk.Entry.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.main_win = main_win
         self.id = cell_id
         self.equ = ""
@@ -17,6 +18,14 @@ class Cell(tk.Entry):
         self.font = tkfont.Font(family=DEFAULT_FONT_FAMILY, size=DEFAULT_FONT_SIZE)
         self.configure(font=self.font)
         self.is_highlighted = False
+        self.decimal_value = None
+        self.bind("<KeyRelease>", self._parse_decimal_value)
+
+    def _parse_decimal_value(self, *args):
+        try:
+            self.decimal_value = decimal.Decimal(self.get())
+        except decimal.InvalidOperation:
+            self.decimal_value = None
 
     def configure(self, cnf = None, **kwargs):
         try:
@@ -27,19 +36,41 @@ class Cell(tk.Entry):
             pass
         super().configure(cnf, **kwargs)
 
+    def insert(self, index, string):
+        super().insert(index, string)
+        self._parse_decimal_value()
+
+    def refresh_cell(self):
+        if self.num_format == "Plain Text":
+            self.to_plain_text()
+        elif self.num_format == "Scientific":
+            self.to_scientific()
+        elif self.num_format == "Financial":
+            self.to_financial()
+
+    def get_decimal_value(self):
+        return self.decimal_value
+
+    def set_decimal_value(self, value):
+        self.decimal_value = value
+
     def to_plain_text(self):
         self.num_format = "Plain Text"
-        try:
-            content = decimal.Decimal(self.get())
-        except decimal.InvalidOperation:
-            return
-        self.set(content)
+        if self.decimal_value is not None:
+            self.delete(0, tk.END)
+            super().insert(0, self.decimal_value)
 
     def to_scientific(self):
         self.num_format = "Scientific"
+        if self.decimal_value is not None:
+            self.delete(0, tk.END)
+            super().insert(0, f"{self.decimal_value:e}")
 
     def to_financial(self):
         self.num_format = "Financial"
+        if self.decimal_value is not None:
+            self.delete(0, tk.END)
+            super().insert(0, f"${self.decimal_value:.2f}")
 
     def set(self, content):
         self.delete(0, tk.END)
@@ -130,9 +161,9 @@ class Cell(tk.Entry):
 
 
 class CellArea(ttk.Frame):
-    def __init__(self, parent, *args, **kwargs):
-        ttk.Frame.__init__(self, *args, **kwargs)
-        self.parent = parent
+    def __init__(self, main_win, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.main_win = main_win
         self.column_labels = list('ABCDEFGHIJKLMNOP')
         self.row_count = 60
         self.cell_dict = {}
@@ -171,7 +202,7 @@ class CellArea(ttk.Frame):
             })
 
     def revise_equation(self, equ, equ_src_cell_id, dest_root_row, dest_root_column):
-        _, _, cell_strs = self.parent.parse_equation(equ)
+        _, _, cell_strs = self.main_win.parse_equation(equ)
         src_column = equ_src_cell_id[0]
         dest_root_row = int(dest_root_row)
         smallest_cell_row = min([int(cell_str[1:]) for cell_str in cell_strs if cell_str[0] == src_column])
@@ -251,7 +282,7 @@ class CellArea(ttk.Frame):
             dest_cell_index += 1
 
         for cell in cells_with_new_equ:
-            cell.set(self.parent.compute_equation(cell.get_equ()))
+            cell.set(self.main_win.compute_equation(cell.get_equ()))
         return 'break' # override default paste behavior
 
     def multi_delete(self, *args):
@@ -286,7 +317,7 @@ class CellArea(ttk.Frame):
 
     def set_all_cells_attributes(self, attr_dict):
         for cell_id in attr_dict.keys():
-            self.set_cell_content(cell_id, attr_dict[cell_id]["content"])
+            self.set_cell_content(cell_id, attr_dict[cell_id]["content"]["text"], attr_dict[cell_id]["content"]["decimal value"])
             self.set_cell_equ(cell_id, attr_dict[cell_id]["equation"])
             self.set_cell_formatting(cell_id, attr_dict[cell_id]["formatting"])
 
@@ -296,8 +327,9 @@ class CellArea(ttk.Frame):
     def set_cell_background(self, cell_id, color):
         self.cell_dict[cell_id].configure(background=color)
 
-    def set_cell_content(self, cell_id, content):
-        self.cell_dict[cell_id].set(content)
+    def set_cell_content(self, cell_id, text, decimal_value=None):
+        self.cell_dict[cell_id].set(text)
+        self.cell_dict[cell_id].set_decimal_value(decimal_value)
 
     def set_cell_equ(self, cell_id, equ):
         self.cell_dict[cell_id].set_equ(equ)
@@ -312,20 +344,26 @@ class CellArea(ttk.Frame):
         return self.cell_dict[cell_id].get_equ()
 
     def get_cell_content(self, cell_id):
-        return self.cell_dict[cell_id].get()
+        return {
+                "text": self.cell_dict[cell_id].get(),
+                "decimal value": self.cell_dict[cell_id].get_decimal_value()
+                }
 
     def get_cell_formating(self, cell_id):
         return self.cell_dict[cell_id].get_formatting()
 
+    def get_cell_decimal_value(self, cell_id):
+        return self.cell_dict[cell_id].get_decimal_value()
+
     def _index_of_current_cell(self):
-        if not isinstance(self.parent.focus_get(), Cell):
+        if not isinstance(self.main_win.focus_get(), Cell):
             return 'break'
-        return self.index_of(self.parent.current_cell.id)
+        return self.index_of(self.main_win.current_cell.id)
 
     def _set_focused_cell(self, new_index):
         cell = self.get_cell_by_index(new_index)
         cell.focus_set()
-        self.parent.update_cells(None)
+        self.main_win.update_cells(None)
 
     def nav_left(self, *args):
         new_index = self._index_of_current_cell() - 60

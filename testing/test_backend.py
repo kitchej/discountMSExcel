@@ -65,13 +65,13 @@ def test_trunc():
 
 
 def test_round():
-    assert equ.round('50.25', '2.5') == 'ERROR'
-    assert equ.round('50.25', 2.5) == 'ERROR'
-    assert equ.round('50.2541', '2') == Decimal('50.25')
-    assert equ.round('104.2', '1') == Decimal('104.2')
-    assert equ.round('26.65987542126598745', '1') == Decimal('26.7')
-    assert equ.round('26.65987542126598745', '4') == Decimal('26.6599')
-    assert equ.round('-45.345', '2') == Decimal('-45.34')
+    assert equ.get_round('50.25', '2.5') == 'ERROR'
+    assert equ.get_round('50.25', 2.5) == 'ERROR'
+    assert equ.get_round('50.2541', '2') == Decimal('50.25')
+    assert equ.get_round('104.2', '1') == Decimal('104.2')
+    assert equ.get_round('26.65987542126598745', '1') == Decimal('26.7')
+    assert equ.get_round('26.65987542126598745', '4') == Decimal('26.6599')
+    assert equ.get_round('-45.345', '2') == Decimal('-45.34')
 
 
 def test_avg():

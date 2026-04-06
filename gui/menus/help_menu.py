@@ -19,7 +19,7 @@ class Features(ttk.Frame):
 
 class HelpMenu(tk.Menu):
     def __init__(self):
-        tk.Menu.__init__(self, tearoff=0)
+        super().__init__(tearoff=0)
         self.add_command(label="About", command=self.show_about)
         self.add_command(label="User Guide", command=self.show_features)
 

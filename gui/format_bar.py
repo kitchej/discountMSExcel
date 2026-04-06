@@ -6,7 +6,7 @@ from tkinter import colorchooser
 
 class FormatBar(ttk.Frame):
     def __init__(self, main_win, *args, **kwargs):
-        ttk.Frame.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.main_win = main_win
 
         self.font_paddingx = 4
